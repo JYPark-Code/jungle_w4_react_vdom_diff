@@ -178,6 +178,9 @@ async function runAll() {
   console.log('\n--- key-diff.test.js ---')
   await import('./key-diff.test.js')
 
+  console.log('\n--- fiber.test.js ---')
+  await import('./fiber.test.js')
+
   console.log('\n=== 테스트 완료 ===')
 }
 
