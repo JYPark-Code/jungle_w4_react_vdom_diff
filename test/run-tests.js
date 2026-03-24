@@ -11,6 +11,7 @@ class MiniNode {
     this._children = []
     this._textContent = ''
     this.parentNode = null
+    this.style = {}  // CSS 스타일 (highlight 테스트용)
   }
 
   get tagName() { return this._tagName }
@@ -157,7 +158,7 @@ globalThis.document = {
 
 // --- 테스트 실행 ---
 async function runAll() {
-  console.log('=== M1 테스트 시작 ===\n')
+  console.log('=== 테스트 시작 ===\n')
 
   console.log('--- vdom.test.js ---')
   await import('./vdom.test.js')
@@ -171,7 +172,10 @@ async function runAll() {
   console.log('\n--- history.test.js ---')
   await import('./history.test.js')
 
-  console.log('\n=== M1 테스트 완료 ===')
+  console.log('\n--- highlight.test.js ---')
+  await import('./highlight.test.js')
+
+  console.log('\n=== 테스트 완료 ===')
 }
 
 runAll().catch(e => console.error('테스트 실행 오류:', e))
