@@ -175,6 +175,9 @@ async function runAll() {
   console.log('\n--- highlight.test.js ---')
   await import('./highlight.test.js')
 
+  console.log('\n--- key-diff.test.js ---')
+  await import('./key-diff.test.js')
+
   console.log('\n=== 테스트 완료 ===')
 }
 
