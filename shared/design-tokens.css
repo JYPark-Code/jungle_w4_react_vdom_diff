@@ -1,0 +1,27 @@
+:root {
+  /* 색상 */
+  --bg-primary:     #000000;
+  --bg-secondary:   #121212;
+  --bg-card:        #1c1c1c;
+  --bg-panel:       #0a0a0a;
+  --border:         #262626;
+  --text-primary:   #f5f5f5;
+  --text-secondary: #a8a8a8;
+  --accent:         #0095f6;
+  --like-active:    #ff3040;
+
+  /* Diff 하이라이트 */
+  --hl-add:    rgba(40, 167, 69,  0.25);
+  --hl-update: rgba(255, 193, 7,  0.25);
+  --hl-delete: rgba(220, 53,  69, 0.25);
+
+  /* 타이포그래피 */
+  --font-main: 'Pretendard', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* 간격 */
+  --radius-md:  8px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+}
