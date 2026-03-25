@@ -190,38 +190,28 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    subgraph VANILLA["Vanilla: innerHTML 전체 교체"]
-        V1["스크롤 바닥 도달"]
-        V2["Observer 발동"]
-        V3["vanillaAddPosts(10)"]
-        V4["render() 호출"]
-        V5["innerHTML = ''<br/>⚠️ sentinel 삭제됨"]
-        V6["새 DOM 생성<br/>(새 sentinel 포함)"]
-        V7["❌ Observer는<br/>이전 sentinel 감시 중"]
-        V8["🔴 인피니트 스크롤 멈춤"]
-
-        V1 --> V2 --> V3 --> V4 --> V5 --> V6 --> V7 --> V8
+    subgraph VANILLA["🔴 Vanilla: innerHTML 전체 교체"]
+        V1["스크롤 바닥 도달"] --> V2["Observer 발동"]
+        V2 --> V3["render() 호출"]
+        V3 --> V4["innerHTML = ''<br/>sentinel 삭제됨 ⚠️"]
+        V4 --> V5["새 DOM 생성"]
+        V5 --> V6["Observer 연결 끊김<br/>스크롤 멈춤 ❌"]
     end
 
-    subgraph VDOM["Mini React: diff + patch"]
-        M1["스크롤 바닥 도달"]
-        M2["Observer 발동"]
-        M3["miniReactAddPosts(10)"]
-        M4["smartRender() 호출"]
-        M5["diff → CREATE 10개"]
-        M6["patch → 10개만 추가<br/>✅ sentinel 그대로"]
-        M7["Observer 계속 감시"]
-        M8["🟢 인피니트 스크롤 정상"]
-
-        M1 --> M2 --> M3 --> M4 --> M5 --> M6 --> M7 --> M8
+    subgraph VDOM["🟢 Mini React: diff + patch"]
+        M1["스크롤 바닥 도달"] --> M2["Observer 발동"]
+        M2 --> M3["smartRender() 호출"]
+        M3 --> M4["diff → CREATE 10개"]
+        M4 --> M5["patch: 10개만 추가<br/>sentinel 유지 ✅"]
+        M5 --> M6["Observer 정상<br/>스크롤 계속 ✅"]
     end
 
     style VANILLA fill:#2d1117,stroke:#dc3545,color:#f5f5f5
     style VDOM fill:#0d2117,stroke:#28a745,color:#f5f5f5
-    style V5 fill:#dc3545,stroke:#dc3545,color:#fff
-    style V8 fill:#dc3545,stroke:#dc3545,color:#fff
+    style V4 fill:#dc3545,stroke:#dc3545,color:#fff
+    style V6 fill:#dc3545,stroke:#dc3545,color:#fff
+    style M5 fill:#28a745,stroke:#28a745,color:#fff
     style M6 fill:#28a745,stroke:#28a745,color:#fff
-    style M8 fill:#28a745,stroke:#28a745,color:#fff
 ```
 
 ---
