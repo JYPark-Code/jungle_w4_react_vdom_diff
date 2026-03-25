@@ -76,7 +76,7 @@ function createPostCard(post) {
     </div>
     <div class="post-actions">
       <button class="btn-like ${post.liked ? 'btn-like--active' : ''}" data-id="${post.id}">
-        ${post.liked ? '❤️' : '🤍'}
+        <span class="heart-icon"></span>
       </button>
     </div>
     <div class="like-count">좋아요 ${post.likes.toLocaleString()}개</div>

@@ -88,7 +88,7 @@ function buildFeedVNode() {
               class: `btn-like${post.liked ? ' btn-like--active' : ''}`,
               'data-id': post.id,
             },
-              post.liked ? '❤️' : '🤍',
+              createElement('span', { class: 'heart-icon' }),
             ),
           ),
           createElement('div', { class: 'like-count' }, `좋아요 ${post.likes.toLocaleString()}개`),
