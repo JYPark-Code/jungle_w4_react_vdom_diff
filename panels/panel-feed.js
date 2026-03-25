@@ -218,7 +218,7 @@ function reobserveMiniSentinel() {
 
 // --- 공통 컨트롤 핸들러 ---
 
-function handleBulkLikeNoBatch() {
+async function handleBulkLikeNoBatch() {
   const postId = '1'
 
   // Vanilla 측정
@@ -231,34 +231,21 @@ function handleBulkLikeNoBatch() {
   miniReactBulkLikeNoBatch(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React (배치 없음) — 불변 업데이트 + DOM 재렌더 시뮬레이션 1000회
-  sendToRealReact({ type: 'bulk-like', postId: '1', times: 1000 })
+  // Real React (배치 없음) — iframe에서 setState 1000번 개별 호출 실측
   let realTime = null
   if (realReactReady) {
-    let posts = Array.from({ length: 10 }, (_, i) => ({
-      id: String(i + 1), user: { name: `user_${i}`, avatar: '🧑' },
-      likes: 100, liked: false,
-      comments: [{ id: `c1`, user: 'a', text: 'hi' }, { id: `c2`, user: 'b', text: 'hey' }],
-      caption: 'test',
-    }))
-    // Real React iframe에 실제 좋아요 전송 (피드에 반영)
-    sendToRealReact({ type: 'bulk-like', postId: '1', times: 1000 })
-
-    // 시간 측정: Vanilla와 동일 조건 (화면에 붙은 DOM에 innerHTML 1000회)
-    const tempDiv = document.createElement('div')
-    tempDiv.style.cssText = 'position:absolute;top:0;left:0;width:400px;opacity:0;pointer-events:none;z-index:-1'
-    document.body.appendChild(tempDiv)
-    const realStart = performance.now()
-    for (let i = 0; i < 1000; i++) {
-      posts = posts.map(p =>
-        p.id === '1' ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p
-      )
-      tempDiv.innerHTML = posts.map(p =>
-        `<div class="post-card"><div class="post-header"><span>${p.user.avatar}</span><span>${p.user.name}</span></div><div class="post-actions"><button>${p.liked ? '❤️' : '🤍'}</button></div><div>좋아요 ${p.likes}개</div><p>${p.caption}</p><div>${p.comments.map(c => `<div><strong>${c.user}</strong> ${c.text}</div>`).join('')}</div></div>`
-      ).join('')
-    }
-    realTime = performance.now() - realStart
-    document.body.removeChild(tempDiv)
+    sendToRealReact({ type: 'bulk-like-nobatch' })
+    // bench-result 메시지 대기 (벤치마크 패널과 동일 패턴)
+    realTime = await new Promise(resolve => {
+      const handler = (e) => {
+        if (e.data && e.data.type === 'bench-result' && e.data.testId === 'nobatch') {
+          window.removeEventListener('message', handler)
+          resolve(e.data.time)
+        }
+      }
+      window.addEventListener('message', handler)
+      setTimeout(() => { window.removeEventListener('message', handler); resolve(null) }, 15000)
+    })
   }
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
@@ -266,14 +253,14 @@ function handleBulkLikeNoBatch() {
     '🔴 배치 없음: 3버전 모두 매번 렌더링합니다!',
     `Vanilla: ${vanillaTime.toFixed(1)}ms — innerHTML 1000회\n`
     + `Mini React: ${miniTime.toFixed(1)}ms — VNode 생성 + diff + 재렌더 1000회\n`
-    + (realTime != null ? `Real React: ${realTime.toFixed(1)}ms — 불변 배열 map() 1000회\n\n` : '')
+    + (realTime != null ? `Real React: ${realTime.toFixed(1)}ms — setState 1000회 개별 호출\n\n` : '')
     + `→ VDom이 무조건 빠른 게 아닙니다. 배치가 핵심이에요!`,
     'danger'
   )
 }
 
-function handleBulkLike() {
-  const postId = '1'  // 첫 번째 포스트에 좋아요
+async function handleBulkLike() {
+  const postId = '1'
 
   // Vanilla 측정
   AppState.renderCounts.vanilla = 0
@@ -287,9 +274,23 @@ function handleBulkLike() {
   miniReactBulkLike(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React
-  sendToRealReact({ type: 'bulk-like', postId, times: 1000 })
-  const realTime = realReactReady ? miniTime * 0.85 : null
+  // Real React (배치 적용) — iframe에서 실측
+  let realTime = null
+  if (realReactReady) {
+    sendToRealReact({ type: 'bulk-like', postId, times: 1000 })
+    realTime = await new Promise(resolve => {
+      const handler = (e) => {
+        if (e.data && e.data.type === 'bench-result' && e.data.testId === 'like1000') {
+          window.removeEventListener('message', handler)
+          resolve(e.data.time)
+        }
+      }
+      window.addEventListener('message', handler)
+      // bench-like1000도 보내서 시간 측정
+      sendToRealReact({ type: 'bench-like1000' })
+      setTimeout(() => { window.removeEventListener('message', handler); resolve(null) }, 15000)
+    })
+  }
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
   showInsight(

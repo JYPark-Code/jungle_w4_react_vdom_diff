@@ -133,9 +133,26 @@ export default function App() {
           nextId = 11
           break
 
+        // --- 배치 없음 벤치마크: setState를 1000번 개별 호출 ---
+        case 'bulk-like-nobatch': {
+          const s = performance.now()
+          for (let i = 0; i < 1000; i++) {
+            setPosts(prev => {
+              const idx = prev.findIndex(p => p.id === '1')
+              if (idx === -1) return prev
+              const p = { ...prev[idx] }
+              p.liked = !p.liked
+              p.likes += p.liked ? 1 : -1
+              return [...prev.slice(0, idx), p, ...prev.slice(idx + 1)]
+            })
+          }
+          const elapsed = performance.now() - s
+          window.parent.postMessage({ type: 'bench-result', testId: 'nobatch', time: elapsed }, '*')
+          break
+        }
+
         // --- 벤치마크 ---
         // setState 콜백 안에서 연산 시간만 측정하고 즉시 응답
-        // (렌더링 대기 없이 — 순수 JS 연산 시간 비교)
         case 'bench-like1000': {
           const s = performance.now()
           setPosts(prev => {
