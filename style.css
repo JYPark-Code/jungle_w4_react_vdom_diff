@@ -716,7 +716,7 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
-  min-height: 280px;
+  min-height: 450px;
   font-family: var(--font-mono);
   font-size: 0.8rem;
 }
@@ -728,7 +728,7 @@ button:disabled {
 }
 .diff-editor {
   width: 100%;
-  min-height: 280px;
+  min-height: 450px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
