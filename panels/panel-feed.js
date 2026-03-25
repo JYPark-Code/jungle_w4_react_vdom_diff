@@ -152,6 +152,8 @@ function initRealReact() {
       window.__realReactReady = true
       iframe.style.display = 'block'
       fallback.style.display = 'none'
+      // stats 표시 업데이트 (초기 "서버 필요" → 정상 표시)
+      updateStats()
     }
 
     if (e.data.type === 'real-react-stats') {
