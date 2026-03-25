@@ -48,7 +48,7 @@ function applyPatch(rootDOM, p) {
   // path를 따라가서 대상 노드와 부모를 찾아요
   const parentDOM = navigateTo(rootDOM, path.slice(0, -1))
   const targetIndex = path[path.length - 1]
-  const targetDOM = parentDOM ? parentDOM.childNodes[targetIndex] : null
+  const targetDOM = parentDOM ? getMeaningfulChild(parentDOM, targetIndex) : null
 
   if (!parentDOM) return
 
@@ -56,7 +56,7 @@ function applyPatch(rootDOM, p) {
     case PATCH_TYPES.CREATE: {
       const newDOM = renderDOM(p.newNode)
       if (newDOM) {
-        const refChild = parentDOM.childNodes[targetIndex]
+        const refChild = getMeaningfulChild(parentDOM, targetIndex)
         if (refChild) {
           parentDOM.insertBefore(newDOM, refChild)
         } else {
@@ -133,13 +133,31 @@ function applyPropPatches(dom, propPatches) {
 
 /**
  * path 배열을 따라가서 DOM 노드를 찾아요
- * path = [0, 2] → rootDOM.childNodes[0].childNodes[2]
+ * path = [0, 2] → rootDOM의 의미있는 자식[0]의 의미있는 자식[2]
+ *
+ * 주의: DOM에는 공백 텍스트 노드가 있지만 VNode에서는 제거해요
+ * 그래서 childNodes[idx]가 아니라, 의미있는 노드만 세서 idx번째를 찾아야 해요
  */
 function navigateTo(rootDOM, path) {
   let current = rootDOM
   for (const idx of path) {
     if (!current || !current.childNodes) return null
-    current = current.childNodes[idx]
+    current = getMeaningfulChild(current, idx)
   }
   return current || null
+}
+
+/**
+ * 공백만 있는 텍스트 노드를 건너뛰고 idx번째 의미있는 자식을 찾아요
+ * domToVNode()과 같은 기준: 빈 공백 텍스트는 무시
+ */
+function getMeaningfulChild(parent, idx) {
+  let count = 0
+  for (const child of parent.childNodes) {
+    // 공백만 있는 텍스트 노드는 건너뛰기 (domToVNode과 동일 기준)
+    if (child.nodeType === 3 && child.textContent.trim() === '') continue
+    if (count === idx) return child
+    count++
+  }
+  return null
 }

@@ -70,6 +70,7 @@ export function highlightPatches(rootDOM, patches) {
 
 /**
  * path 배열을 따라가서 DOM 노드를 찾아요
+ * 공백 텍스트 노드를 건너뛰어서 VNode 인덱스와 맞춰요
  */
 function findDOMByPath(rootDOM, path) {
   if (!path || path.length === 0) return rootDOM
@@ -77,7 +78,17 @@ function findDOMByPath(rootDOM, path) {
   let current = rootDOM
   for (const idx of path) {
     if (!current || !current.childNodes) return null
-    current = current.childNodes[idx]
+    current = getMeaningfulChild(current, idx)
   }
   return current || null
+}
+
+function getMeaningfulChild(parent, idx) {
+  let count = 0
+  for (const child of parent.childNodes) {
+    if (child.nodeType === 3 && child.textContent.trim() === '') continue
+    if (count === idx) return child
+    count++
+  }
+  return null
 }
