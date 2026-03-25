@@ -400,6 +400,27 @@ DOM 구조가 단순할수록 innerHTML이 빠르고, VNode 객체 생성 + diff
 
 따라서 **피드 비교 패널(패널 1)의 배치 없음 vs 배치 적용 비교**가 VDom의 실제 가치를 더 정확하게 보여줍니다.
 
+### UI 블로킹 벤치마크에서 Real React가 가장 느린 이유
+
+```js
+// Real React의 bench-blocking
+setPosts(prev => {
+  let u = [...prev]
+  for (let i = 0; i < 1000; i++) {
+    u = u.map((p, idx) => idx === 0 ? { ...p, likes: p.likes + 1 } : p)
+  }
+  return u
+})
+```
+
+`u.map()`을 **1000번 반복**하면서 매번 **전체 posts 배열**을 순회합니다. 포스트 10개 기준 `10 × 1000 = 10,000번` 객체 생성. 이전에 댓글 추가나 포스트 추가를 했으면 배열이 더 커져서 더 느려집니다.
+
+- **Vanilla**: 단순 `innerHTML = 문자열` — 네이티브 HTML 파서가 처리
+- **Mini React**: 단순 `createElement + diff` — 가벼운 JS 객체 비교
+- **Real React**: 불변성 기반 `map()` 1000회 — 매번 새 배열 + 새 객체 생성
+
+이것은 **불변성(immutability) 기반 상태 관리의 트레이드오프**입니다. React는 상태를 직접 수정하지 않고 매번 새 객체를 만들어서 변경을 감지합니다. 안전하지만 대량 반복에서는 오버헤드가 생깁니다. 실제 앱에서는 이런 극단적 반복이 없으므로 문제가 되지 않습니다.
+
 ---
 
 ## 구현 대응표
