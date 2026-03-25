@@ -334,93 +334,103 @@ setState(3)  // 큐에 쌓기만
 
 ---
 
-## 벤치마크 결과
+## 벤치마크 결과 (시연 순서)
 
-| 측정 항목 | Vanilla | Mini React | Real React |
-|-----------|---------|------------|------------|
-| 좋아요 1000회 | ~488ms | ~0.2ms (배치) | ~0.2ms |
-| 포스트 100개 렌더 | 비슷 | 비슷 | 비슷 |
-| 인피니트 스크롤 +10개 | **멈춤** (아래 설명) | CREATE 10개만 | CREATE 10개만 |
-| setState 3회 렌더 횟수 | 3회 | 1회 (배치) | 1회 (automatic batching) |
+패널 5의 [전체 벤치마크 실행] 버튼으로 5개 항목을 순서대로 측정합니다.
 
-### Vanilla 인피니트 스크롤이 멈추는 이유 — Sentinel 문제
+> 대부분 Vanilla가 가장 느리고 Mini React ≈ Real React가 빠르지만, **항상 그렇지는 않습니다.** 각 항목별로 "왜 그런 결과가 나오는지"를 이해하는 것이 핵심입니다.
 
-인피니트 스크롤은 **Intersection Observer**로 구현합니다. 피드 맨 아래에 보이지 않는 sentinel(감시 요소)을 두고, 이 요소가 화면에 들어오면 "바닥에 도달했다"고 판단해서 포스트를 추가합니다.
+---
+
+### 1. 좋아요 1000회 연속 — 가장 흔한 인터랙션에서의 차이
+
+| Vanilla | Mini React | Real React |
+|---------|------------|------------|
+| 느림 (innerHTML 1000회) | 빠름 (diff만 1000회) | 빠름 (배치 적용) |
+
+- Vanilla: 매번 전체 DOM을 `innerHTML`로 교체 → Reflow 1000회
+- Mini React: VNode 객체 비교만 수행 (실제 DOM 조작 없음)
+- Real React: iframe 내 실측 (setState 콜백 안에서 측정)
+
+**Mini React가 Vanilla보다 느릴 수 있는 경우:** 벤치마크가 단순한 DOM(`<div><span>`)으로 시뮬레이션하기 때문. innerHTML은 브라우저 네이티브 파서가 처리하므로 단순 구조에서는 오히려 빠름. VNode 객체 생성 + diff 함수 호출의 JS 오버헤드가 더 클 수 있음.
+
+---
+
+### 2. 포스트 100개 최초 렌더링 — 초기 로딩 속도
+
+| Vanilla | Mini React | Real React |
+|---------|------------|------------|
+| 비슷 | 비슷 | 비슷 |
+
+초기 렌더링은 어떤 방식이든 DOM을 처음부터 만들어야 하므로 **차이가 거의 없습니다.** VDom의 이점은 "업데이트"에서 나타나지, 최초 렌더에서는 아닙니다.
+
+---
+
+### 3. 인피니티 스크롤 +10개 — 스크롤 중 추가 렌더링
+
+| Vanilla | Mini React | Real React |
+|---------|------------|------------|
+| **멈춤** | CREATE 10개만 | CREATE 10개만 |
+
+Vanilla는 인피니트 스크롤이 **멈춥니다.** 이유:
 
 ```
-┌──────────────┐
-│  포스트 1     │
-│  포스트 2     │
-│  ...         │
-│  포스트 10    │
-│  ── sentinel ── ← Observer가 감시하는 요소
-└──────────────┘
-         ↓ 스크롤해서 sentinel이 보이면
-         ↓ Observer 발동 → 포스트 +10개 로드
+Vanilla render()
+  → innerHTML = ''        ← sentinel DOM 삭제!
+  → 새 DOM 생성           ← 새 sentinel은 Observer에 미등록
+  → Observer 연결 끊김    ← 스크롤 멈춤
+
+Mini React smartRender()
+  → diff → CREATE 10개    ← 새 포스트만 추가
+  → sentinel은 변경 없음  ← DOM 그대로, Observer 유지
 ```
 
-**Vanilla의 문제:**
-```
-render() 호출
-  → container.innerHTML = ''   ← 전체 DOM 삭제 (sentinel 포함!)
-  → 새 DOM 생성               ← 새 sentinel도 생성되지만
-  → Observer는 이전 sentinel을 감시 중  ← 연결 끊김!
-```
+**이것이 VDom이 필요한 실제 이유** — 속도가 아니라, 전체 리렌더가 기존 DOM 참조(Observer, 이벤트, input 포커스)를 파괴하는 문제를 해결합니다.
 
-Vanilla는 매번 `innerHTML`로 전체를 지우고 다시 그리기 때문에, Observer가 감시하던 sentinel DOM 요소가 삭제됩니다. 새로 만들어진 sentinel은 Observer에 등록되지 않았으므로 **인피니트 스크롤이 멈춥니다.**
+---
 
-**Mini React / Real React:**
-```
-smartRender() 호출
-  → diff(이전 VNode, 새 VNode)  ← 변경점만 찾음
-  → patch(변경된 부분만)         ← sentinel은 변경 없음 → DOM 그대로!
-  → Observer는 같은 sentinel을 계속 감시  ← 정상 동작
-```
+### 4. UI 블로킹 (응답 지연 시간) — setTimeout(fn,0) 응답까지 걸리는 시간
 
-VDom 방식은 변경되지 않은 노드를 건드리지 않으므로, sentinel DOM이 유지되고 Observer 연결이 끊어지지 않습니다.
-
-**이것이 Virtual DOM이 필요한 실제 이유 중 하나입니다** — 단순한 속도 차이가 아니라, 전체 리렌더가 기존 DOM 참조(Observer, 이벤트, input 포커스 등)를 파괴하는 문제를 해결합니다.
-
-> Real React 측정값에 `~`가 붙는 이유: iframe(postMessage) 비동기 통신 특성상 동기 측정이 불가하여, 배치 적용된 Mini React 실측값 기반으로 추정합니다.
-
-### 벤치마크 패널에서 Vanilla가 더 빠르게 나올 수 있는 이유
-
-벤치마크 패널(패널 5)의 "좋아요 1000회"와 "UI 블로킹" 측정은 **단순한 DOM 시뮬레이션**입니다.
-
-- **Vanilla**: `innerHTML = 문자열` 한 줄 — 브라우저의 네이티브 HTML 파서가 처리
-- **Mini React**: `createElement()` → `diff()` — JavaScript 객체 생성 + 트리 순회 오버헤드
-
-DOM 구조가 단순할수록 innerHTML이 빠르고, VNode 객체 생성 + diff 함수 호출의 JS 오버헤드가 더 클 수 있습니다. 이것은 **정상적인 결과**입니다.
-
-**VDom의 진짜 이점은 단순 속도가 아닙니다:**
-
-1. **복잡한 DOM에서의 최소 업데이트** — 실제 피드처럼 수백 개 노드가 있을 때, innerHTML은 전체를 버리고 다시 만들지만 diff+patch는 변경된 1개만 건드림
-2. **배치(Batch)** — 상태 변경 1000번을 모아서 렌더 1번만 실행
-3. **입력 상태 보존** — innerHTML로 전체를 교체하면 input의 포커스/입력값이 날아가지만, patch는 변경되지 않은 노드를 그대로 유지
-
-따라서 **피드 비교 패널(패널 1)의 배치 없음 vs 배치 적용 비교**가 VDom의 실제 가치를 더 정확하게 보여줍니다.
-
-### UI 블로킹 벤치마크 — setTimeout 응답 시간 측정
-
-현재 UI 블로킹 벤치마크는 **iframe 없이** 3버전 모두 메인 스레드에서 직접 측정합니다.
+| Vanilla | Mini React | Real React |
+|---------|------------|------------|
+| 높음 (수백ms) | 낮음 (JS 연산만) | 중간 (객체 생성) |
 
 ```
 측정 원리:
-1. setTimeout(fn, 0) 예약 — "다음 할 일 없을 때 실행해줘"
-2. 블로킹 작업 실행 (DOM 조작 / diff / map)
-3. 작업이 메인 스레드를 점유하면 → setTimeout 콜백이 지연됨
+1. setTimeout(fn, 0) 예약
+2. 블로킹 작업 실행
+3. 작업이 메인 스레드를 점유하면 → setTimeout 콜백 지연
 4. 응답까지 걸린 시간 = 블로킹 정도
 ```
 
-| 버전 | 작업 내용 | 블로킹 정도 |
-|------|----------|------------|
-| Vanilla | 동기 DOM innerHTML 1000회 | 높음 (수백ms) |
-| Mini React | createElement + diff 1000회 | 낮음 (JS 연산만) |
-| Real React | 불변 배열 map() 1000회 | 중간 (객체 생성 오버헤드) |
+**Real React가 Mini React보다 느릴 수 있는 이유:** 불변성(immutability) 기반 상태 관리. `map()`으로 매번 새 배열 + 새 객체를 생성하므로 대량 반복(1000회)에서 오버헤드 발생. 실제 앱에서는 이런 극단적 반복이 없으므로 문제가 되지 않습니다.
 
-Real React가 Mini React보다 느릴 수 있는 이유는 **불변성(immutability) 기반 상태 관리**입니다. `map()`으로 매번 새 배열 + 새 객체를 생성하므로 대량 반복에서 오버헤드가 발생합니다. 실제 앱에서는 이런 극단적 반복이 없으므로 문제가 되지 않습니다.
+---
 
-> **참고 (이전 방식)**: 초기에는 iframe postMessage로 Real React의 실제 렌더링 시간을 측정했으나, hidden iframe에서 `requestAnimationFrame`이 지연되는 문제가 있어 현재 방식으로 변경했습니다.
+### 5. setState 3회 동시 호출 — Batching, 렌더링 횟수 비교
+
+| Vanilla | Mini React | Real React |
+|---------|------------|------------|
+| 3회 렌더 | 1회 렌더 (Batch) | 1회 렌더 (automatic batching) |
+
+Vanilla는 상태를 바꿀 때마다 `render()`를 호출하므로 3회 렌더링. Mini React와 Real React는 여러 상태 변경을 모아서 **한 번만 렌더링**합니다. 이것이 React 18의 automatic batching과 같은 원리입니다.
+
+---
+
+### 속도 역전이 발생하는 이유 — 정상입니다
+
+벤치마크에서 Mini React가 Vanilla보다 느리거나, Real React가 가장 느린 경우가 있습니다.
+
+**VDom의 진짜 이점은 단순 속도가 아닙니다:**
+
+1. **복잡한 DOM에서의 최소 업데이트** — 수백 개 노드 중 변경된 1개만 건드림
+2. **배치(Batch)** — 상태 변경 1000번을 모아서 렌더 1번
+3. **DOM 참조 보존** — Observer, 이벤트, input 포커스가 유지됨
+4. **예측 가능한 성능** — DOM 복잡도가 커져도 변경분에 비례
+
+**피드 비교 패널의 "배치 없음 vs 배치 적용"** 비교가 VDom의 실제 가치를 가장 정확하게 보여줍니다.
+
+> **참고**: Real React 측정값에 `~`가 붙는 경우, iframe postMessage 비동기 통신 특성상 추정값입니다. 벤치마크 패널(패널 5)에서는 iframe을 통해 실측하며, 피드 비교 패널(패널 1)에서는 Mini React 기반 추정값을 사용합니다.
 
 ---
 
