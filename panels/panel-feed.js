@@ -231,30 +231,31 @@ async function handleBulkLikeNoBatch() {
   miniReactBulkLikeNoBatch(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React (배치 없음) — iframe에서 setState 1000번 개별 호출 실측
+  // Real React — React 18은 automatic batching으로 항상 배치 적용
+  // setState 1000번 호출해도 렌더 1번만 → 항상 빠름
+  sendToRealReact({ type: 'bulk-like', postId: '1', times: 1000 })
   let realTime = null
   if (realReactReady) {
-    sendToRealReact({ type: 'bulk-like-nobatch' })
-    // bench-result 메시지 대기 (벤치마크 패널과 동일 패턴)
     realTime = await new Promise(resolve => {
       const handler = (e) => {
-        if (e.data && e.data.type === 'bench-result' && e.data.testId === 'nobatch') {
+        if (e.data && e.data.type === 'bench-result' && e.data.testId === 'like1000') {
           window.removeEventListener('message', handler)
           resolve(e.data.time)
         }
       }
       window.addEventListener('message', handler)
+      sendToRealReact({ type: 'bench-like1000' })
       setTimeout(() => { window.removeEventListener('message', handler); resolve(null) }, 15000)
     })
   }
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
   showInsight(
-    '🔴 배치 없음: 3버전 모두 매번 렌더링합니다!',
+    '🔴 배치 없음: Vanilla와 Mini React는 매번 렌더링합니다!',
     `Vanilla: ${vanillaTime.toFixed(1)}ms — innerHTML 1000회\n`
     + `Mini React: ${miniTime.toFixed(1)}ms — VNode 생성 + diff + 재렌더 1000회\n`
-    + (realTime != null ? `Real React: ${realTime.toFixed(1)}ms — setState 1000회 개별 호출\n\n` : '')
-    + `→ VDom이 무조건 빠른 게 아닙니다. 배치가 핵심이에요!`,
+    + (realTime != null ? `Real React: ${realTime.toFixed(1)}ms — automatic batching으로 렌더 1회 (끌 수 없음!)\n\n` : '')
+    + `→ React 18은 배치를 끌 수 없습니다. 이것이 automatic batching의 핵심이에요!`,
     'danger'
   )
 }
