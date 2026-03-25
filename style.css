@@ -355,7 +355,7 @@ button:disabled {
 .like-count {
   font-weight: 600;
   font-size: 0.8rem;
-  padding: 6px var(--spacing-md) 4px;
+  padding: 10px var(--spacing-md) 4px;
 }
 
 /* 캡션 — Instagram 스타일 */
