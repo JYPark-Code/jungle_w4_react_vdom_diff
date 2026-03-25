@@ -543,10 +543,10 @@ button:disabled {
   color: #8be9fd;
   line-height: 1.5;
 }
-/* 변경 없는 노드 — 흐리게 */
+/* 변경 없는 노드 — 흰색이지만 하이라이트 없음 */
 .tree-label--dim {
-  opacity: 0.3;
-  color: var(--text-secondary);
+  opacity: 0.55;
+  color: var(--text-primary);
 }
 /* 삭제/이전값 — 빨간 배경 */
 .tree-label--removed {
