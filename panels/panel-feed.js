@@ -241,20 +241,24 @@ function handleBulkLikeNoBatch() {
       comments: [{ id: `c1`, user: 'a', text: 'hi' }, { id: `c2`, user: 'b', text: 'hey' }],
       caption: 'test',
     }))
-    // 실제 feed-real 컨테이너에서 DOM 조작 (Vanilla/Mini React와 동일 조건)
-    const realContainer = document.getElementById('feed-real')
-    const savedHTML = realContainer.innerHTML
+    // Real React iframe에 실제 좋아요 전송 (피드에 반영)
+    sendToRealReact({ type: 'bulk-like', postId: '1', times: 1000 })
+
+    // 시간 측정: Vanilla와 동일 조건 (화면에 붙은 DOM에 innerHTML 1000회)
+    const tempDiv = document.createElement('div')
+    tempDiv.style.cssText = 'position:absolute;top:0;left:0;width:400px;opacity:0;pointer-events:none;z-index:-1'
+    document.body.appendChild(tempDiv)
     const realStart = performance.now()
     for (let i = 0; i < 1000; i++) {
       posts = posts.map(p =>
         p.id === '1' ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p
       )
-      realContainer.innerHTML = posts.map(p =>
-        `<div class="post-card"><div class="post-header"><span class="post-avatar">${p.user.avatar}</span><span class="post-username">${p.user.name}</span></div><div class="post-actions"><button class="btn-like">${p.liked ? '❤️' : '🤍'}</button></div><div class="like-count">좋아요 ${p.likes}개</div><p class="post-caption">${p.caption}</p><div class="post-comments">${p.comments.map(c => `<div class="comment"><strong>${c.user}</strong> ${c.text}</div>`).join('')}</div></div>`
+      tempDiv.innerHTML = posts.map(p =>
+        `<div class="post-card"><div class="post-header"><span>${p.user.avatar}</span><span>${p.user.name}</span></div><div class="post-actions"><button>${p.liked ? '❤️' : '🤍'}</button></div><div>좋아요 ${p.likes}개</div><p>${p.caption}</p><div>${p.comments.map(c => `<div><strong>${c.user}</strong> ${c.text}</div>`).join('')}</div></div>`
       ).join('')
     }
     realTime = performance.now() - realStart
-    realContainer.innerHTML = savedHTML
+    document.body.removeChild(tempDiv)
   }
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
