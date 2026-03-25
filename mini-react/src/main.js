@@ -38,6 +38,8 @@ function smartRender() {
     container.innerHTML = ''
     const dom = renderDOM(newVNode)
     container.appendChild(dom)
+    // AppState에 초기 VNode 공유
+    AppState.update({ currentVNode: newVNode, previousVNode: null, lastPatches: [] })
   } else {
     // 이후 렌더: diff로 변경점만 찾아서 patch!
     const patches = diff(currentVNode, newVNode)
