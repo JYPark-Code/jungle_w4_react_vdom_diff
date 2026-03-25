@@ -231,14 +231,26 @@ function handleBulkLikeNoBatch() {
   miniReactBulkLikeNoBatch(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React (배치 없음) — 불변 배열 map 1000회 시뮬레이션
+  // Real React (배치 없음) — 실제 피드 구조로 불변 업데이트 + 렌더 시뮬레이션 1000회
   sendToRealReact({ type: 'bulk-like', postId: '1', times: 1000 })
   let realTime = null
   if (realReactReady) {
+    // 실제 피드와 동일한 구조의 데이터
+    let posts = Array.from({ length: 10 }, (_, i) => ({
+      id: String(i + 1),
+      user: { name: `user_${i}`, avatar: '🧑' },
+      image: `img_${i}`, likes: 100, liked: false,
+      comments: [{ id: `c1`, user: 'a', text: 'hi' }, { id: `c2`, user: 'b', text: 'hey' }],
+      caption: 'test',
+    }))
     const realStart = performance.now()
-    let arr = Array.from({ length: 10 }, (_, i) => ({ id: i, likes: 100, liked: false }))
     for (let i = 0; i < 1000; i++) {
-      arr = arr.map((p, idx) => idx === 0 ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p)
+      // 불변 업데이트 (React 방식) — 매번 새 배열 + 새 객체 생성
+      posts = posts.map(p =>
+        p.id === '1' ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p
+      )
+      // DOM 렌더 시뮬레이션 — 매번 JSON 직렬화로 비용 추가
+      JSON.stringify(posts)
     }
     realTime = performance.now() - realStart
   }
