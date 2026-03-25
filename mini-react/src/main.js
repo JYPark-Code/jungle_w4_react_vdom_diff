@@ -65,7 +65,14 @@ function smartRender() {
 
   currentVNode = newVNode
   bindEvents()
+
+  // 전체 재렌더 후 sentinel이 새로 생성됨 → 외부 콜백으로 reobserve
+  if (onAfterRender) onAfterRender()
 }
+
+// 렌더 후 콜백 등록 (인피니트 스크롤 sentinel 재연결용)
+let onAfterRender = null
+export function setAfterRenderCallback(fn) { onAfterRender = fn }
 
 // --- VNode 트리 빌드 ---
 function buildFeedVNode() {

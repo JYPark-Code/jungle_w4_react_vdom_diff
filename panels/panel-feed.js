@@ -15,6 +15,7 @@ import {
   miniReactDeleteComment, miniReactStorySeen, miniReactAddPosts,
   miniReactBulkLike, miniReactBulkLikeNoBatch,
   getMiniReactRenderCount, getMiniReactPosts,
+  setAfterRenderCallback,
 } from '../mini-react/src/main.js'
 
 let initialized = false
@@ -113,6 +114,8 @@ let realReactLastTime = 0
 function initFeeds() {
   initVanillaFeed(document.getElementById('feed-vanilla'))
   initMiniReactFeed(document.getElementById('feed-mini'))
+  // 렌더 후 sentinel 재연결 콜백 등록
+  setAfterRenderCallback(() => reobserveMiniSentinel())
   // 인피니트 스크롤 활성화
   initVanillaInfiniteScroll()
   initMiniInfiniteScroll()
@@ -172,31 +175,45 @@ function sendToRealReact(msg) {
 }
 
 // Mini React 인피니트 스크롤
-function initMiniInfiniteScroll() {
-  let isLoading = false
-  let loadCount = 0
-  const maxLoads = 5
+// 전체 재렌더 시 sentinel이 새로 생성되므로, 매번 다시 observe해야 함
+let miniObserver = null
+let miniIsLoading = false
+let miniLoadCount = 0
+const MINI_MAX_LOADS = 5
 
-  const observer = new IntersectionObserver((entries) => {
+function initMiniInfiniteScroll() {
+  miniIsLoading = false
+  miniLoadCount = 0
+
+  if (miniObserver) miniObserver.disconnect()
+
+  miniObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting && !isLoading && loadCount < maxLoads) {
-        isLoading = true
-        loadCount++
+      if (entry.isIntersecting && !miniIsLoading && miniLoadCount < MINI_MAX_LOADS) {
+        miniIsLoading = true
+        miniLoadCount++
         setTimeout(() => {
           miniReactAddPosts(10)
-          isLoading = false
+          miniIsLoading = false
+          // 재렌더 후 새 sentinel을 다시 observe
+          reobserveMiniSentinel()
         }, 300)
       }
     })
   }, { threshold: 0.1 })
 
+  reobserveMiniSentinel()
+}
+
+function reobserveMiniSentinel() {
+  if (!miniObserver) return
   const check = setInterval(() => {
     const sentinel = document.getElementById('mini-sentinel')
     if (sentinel) {
-      observer.observe(sentinel)
+      miniObserver.observe(sentinel)
       clearInterval(check)
     }
-  }, 200)
+  }, 100)
 }
 
 // --- 공통 컨트롤 핸들러 ---
