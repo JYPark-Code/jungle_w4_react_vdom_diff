@@ -198,6 +198,8 @@ graph TD
         M5 --> M6["Observer 정상<br/>스크롤 계속 ✅"]
     end
 
+    M6 -.-> V1
+
     subgraph VANILLA["🔴 Vanilla: innerHTML 전체 교체"]
         V1["스크롤 바닥 도달"] --> V2["Observer 발동"]
         V2 --> V3["render() 호출"]
@@ -412,13 +414,13 @@ DOM 구조가 단순할수록 innerHTML이 빠르고, VNode 객체 생성 + diff
 
 | 우리 구현 | Real React 대응 | 역할 |
 |-----------|----------------|------|
-| `domToVNode()` | `React.createElement()` | DOM을 가상 객체로 변환 |
-| `diff()` 5케이스 | Reconciler (`ReactFiber.js`) | 두 트리 비교, 변경점 추출 |
-| `patch()` | `react-dom commitWork()` | 변경점을 실제 DOM에 반영 |
-| `key-diff` | `key` prop 최적화 | 리스트 순서 변경 최적화 |
-| Fiber 스케줄러 | `scheduler` 패키지 `workLoop` | 작업 분할, 브라우저 양보 |
-| `useState` | `ReactHooks.js` | 함수 컴포넌트 상태 관리 |
-| Batch (큐 기반) | React 18 automatic batching | 여러 setState를 모아서 한 번에 |
+| `domToVNode()` | [`React.createElement()`](https://github.com/facebook/react/blob/main/packages/react/src/jsx/ReactJSXElement.js) | DOM을 가상 객체로 변환 |
+| `diff()` 5케이스 | [`Reconciler`](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberBeginWork.js) | 두 트리 비교, 변경점 추출 |
+| `patch()` | [`commitWork()`](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberCommitWork.js) | 변경점을 실제 DOM에 반영 |
+| `key-diff` | [`key prop`](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactChildFiber.js) | 리스트 순서 변경 최적화 |
+| Fiber 스케줄러 | [`scheduler workLoop`](https://github.com/facebook/react/blob/main/packages/scheduler/src/forks/Scheduler.js) | 작업 분할, 브라우저 양보 |
+| `useState` | [`ReactFiberHooks`](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js) | 함수 컴포넌트 상태 관리 |
+| Batch (큐 기반) | [`ReactFiberWorkLoop`](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberWorkLoop.js) | 여러 setState를 모아서 한 번에 |
 
 **"우리가 구현한 것이 React의 핵심입니다."**
 
