@@ -36,10 +36,7 @@ function sendStats(renderCount, time) {
   }
 }
 
-// 앱 로드 완료 알림 — 부모가 이걸 받아야 "Real React 준비됨"으로 판단
-if (window.parent !== window) {
-  window.parent.postMessage({ type: 'real-react-ready' }, '*')
-}
+// ready 메시지는 App 컴포넌트의 useEffect에서 보냅니다
 
 export default function App() {
   const [posts, setPosts] = useState(INITIAL_POSTS)
@@ -198,6 +195,16 @@ export default function App() {
       }
     }
     window.addEventListener('message', handler)
+
+    // 부모에게 "준비 완료" 알림 — 부모가 놓치지 않도록 반복 전송
+    if (window.parent !== window) {
+      const readyInterval = setInterval(() => {
+        window.parent.postMessage({ type: 'real-react-ready' }, '*')
+      }, 500)
+      // 5초 후 중단
+      setTimeout(() => clearInterval(readyInterval), 5000)
+    }
+
     return () => window.removeEventListener('message', handler)
   }, [handleAddPosts, handleAddComment, handleDeleteComment, handleStorySeen])
 
