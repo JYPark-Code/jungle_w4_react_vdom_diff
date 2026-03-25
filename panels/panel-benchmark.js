@@ -97,9 +97,13 @@ export function initPanelBenchmark() {
 
   document.getElementById('bench-run-all').addEventListener('click', runAllBenchmarks)
 
-  // Real React 벤치마크 결과 수신
+  // Real React 메시지 수신 (ready + bench-result)
   window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'bench-result') {
+    if (!e.data) return
+    if (e.data.type === 'real-react-ready') {
+      benchReactReady = true
+    }
+    if (e.data.type === 'bench-result') {
       onBenchResult(e.data.testId, e.data.time)
     }
   })
@@ -110,21 +114,23 @@ export function initPanelBenchmark() {
 }
 
 // --- Real React iframe 통신 ---
+let benchReactReady = false
 
 function isRealReactAvailable() {
-  // panel-feed.js에서 iframe 로드 성공 시 설정하는 전역 플래그 확인
-  return window.__realReactReady === true
+  // 방법 1: 벤치마크 패널 자체가 ready 메시지를 받았는지
+  if (benchReactReady) return true
+  // 방법 2: panel-feed.js가 설정한 전역 플래그
+  if (window.__realReactReady === true) return true
+  return false
 }
 
 function sendBench(testId) {
+  const iframe = document.getElementById('real-react-iframe')
+  if (!iframe || !iframe.contentWindow) return false
   if (!isRealReactAvailable()) return false
   try {
-    const iframe = document.getElementById('real-react-iframe')
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage({ type: `bench-${testId}` }, '*')
-      return true
-    }
-    return false
+    iframe.contentWindow.postMessage({ type: `bench-${testId}` }, '*')
+    return true
   } catch (e) {
     return false
   }
@@ -157,7 +163,8 @@ function onBenchResult(testId, time) {
 async function runAllBenchmarks() {
   const btn = document.getElementById('bench-run-all')
   btn.disabled = true
-  btn.textContent = '⏳ 실행 중...'
+  const reactStatus = isRealReactAvailable() ? '✅ Real React 연결됨' : '⚠️ Real React 미연결'
+  btn.textContent = `⏳ 실행 중... (${reactStatus})`
 
   await runLike1000()
   await runRender100()
