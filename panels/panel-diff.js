@@ -31,6 +31,86 @@ const SAMPLE_HTML = `<div class="post-card">
   </ul>
 </div>`
 
+// 프리셋: 각 Diff 케이스를 자동으로 테스트 영역에 반영
+const PRESETS = {
+  update: {
+    label: '🟡 UPDATE',
+    html: `<div class="post-card">
+  <div class="post-header">
+    <span class="avatar">🧑</span>
+    <span class="username">user_01</span>
+  </div>
+  <div class="post-image"><img src="https://picsum.photos/seed/1/600/600" alt="post" /></div>
+  <div class="post-actions">
+    <span class="likes">❤️ 128개</span>
+    <span class="comments-count">💬 2개</span>
+  </div>
+  <div class="post-caption">오늘의 일상 ☀️</div>
+  <ul class="comments-list">
+    <li>friend_01: 멋지다! 👍</li>
+    <li>friend_02: 나도 가고 싶다 ✈️</li>
+  </ul>
+</div>`,
+  },
+  add: {
+    label: '🟢 ADD',
+    html: `<div class="post-card">
+  <div class="post-header">
+    <span class="avatar">🧑</span>
+    <span class="username">user_01</span>
+  </div>
+  <div class="post-image"><img src="https://picsum.photos/seed/1/600/600" alt="post" /></div>
+  <div class="post-actions">
+    <span class="likes">❤️ 127개</span>
+    <span class="comments-count">💬 3개</span>
+  </div>
+  <div class="post-caption">오늘의 일상 ☀️</div>
+  <ul class="comments-list">
+    <li>friend_01: 멋지다! 👍</li>
+    <li>friend_02: 나도 가고 싶다 ✈️</li>
+    <li>friend_03: 언제 갔어? 🤔</li>
+  </ul>
+</div>`,
+  },
+  delete: {
+    label: '🔴 DELETE',
+    html: `<div class="post-card">
+  <div class="post-header">
+    <span class="avatar">🧑</span>
+    <span class="username">user_01</span>
+  </div>
+  <div class="post-image"><img src="https://picsum.photos/seed/1/600/600" alt="post" /></div>
+  <div class="post-actions">
+    <span class="likes">❤️ 127개</span>
+    <span class="comments-count">💬 1개</span>
+  </div>
+  <div class="post-caption">오늘의 일상 ☀️</div>
+  <ul class="comments-list">
+    <li>friend_01: 멋지다! 👍</li>
+  </ul>
+</div>`,
+  },
+  props: {
+    label: '🔵 PROPS',
+    html: `<div class="post-card highlighted">
+  <div class="post-header">
+    <span class="avatar">🧑</span>
+    <span class="username">user_01</span>
+  </div>
+  <div class="post-image"><img src="https://picsum.photos/seed/1/600/600" alt="post" /></div>
+  <div class="post-actions">
+    <span class="likes">❤️ 127개</span>
+    <span class="comments-count">💬 2개</span>
+  </div>
+  <div class="post-caption">오늘의 일상 ☀️</div>
+  <ul class="comments-list">
+    <li>friend_01: 멋지다! 👍</li>
+    <li>friend_02: 나도 가고 싶다 ✈️</li>
+  </ul>
+</div>`,
+  },
+}
+
 export function initPanelDiff() {
   const panel = document.getElementById('panel-diff')
   panel.innerHTML = `
@@ -53,6 +133,10 @@ export function initPanelDiff() {
     <div class="diff-controls">
       <button id="diff-btn-patch" class="diff-btn diff-btn--primary">⚡ Patch 적용</button>
       <button id="diff-btn-undo" class="diff-btn" disabled>← 뒤로</button>
+      <button id="diff-preset-update" class="diff-btn diff-btn--preset">🟡 UPDATE</button>
+      <button id="diff-preset-add" class="diff-btn diff-btn--preset">🟢 ADD</button>
+      <button id="diff-preset-delete" class="diff-btn diff-btn--preset">🔴 DELETE</button>
+      <button id="diff-preset-props" class="diff-btn diff-btn--preset">🔵 PROPS</button>
       <button id="diff-btn-redo" class="diff-btn" disabled>앞으로 →</button>
       <button id="diff-btn-reset" class="diff-btn diff-btn--secondary">🔄 초기화</button>
     </div>
@@ -69,6 +153,14 @@ export function initPanelDiff() {
   document.getElementById('diff-btn-undo').addEventListener('click', handleUndo)
   document.getElementById('diff-btn-redo').addEventListener('click', handleRedo)
   document.getElementById('diff-btn-reset').addEventListener('click', handleReset)
+
+  // 프리셋 버튼: 테스트 영역에 코드 자동 입력 + Patch 자동 실행
+  Object.keys(PRESETS).forEach(key => {
+    document.getElementById(`diff-preset-${key}`).addEventListener('click', () => {
+      document.getElementById('diff-editor').value = PRESETS[key].html.trim()
+      handlePatch()
+    })
+  })
 
   onPanelMount('diff', () => {
     if (!initialized) {
@@ -183,8 +275,49 @@ function syncBothAreas(vnode) {
   const dom = renderDOM(vnode)
   realArea.appendChild(dom)
 
-  // 테스트 영역: DOM을 HTML 텍스트로
-  editor.value = realArea.innerHTML
+  // 테스트 영역: VNode → 포맷팅된 HTML 텍스트 (인댄트 유지)
+  editor.value = vnodeToHtml(vnode, 0)
+}
+
+/**
+ * VNode를 인댄트가 있는 HTML 문자열로 변환해요
+ * innerHTML 대신 이걸 쓰면 줄바꿈과 들여쓰기가 유지돼요
+ */
+function vnodeToHtml(vnode, depth) {
+  if (!vnode) return ''
+  const indent = '  '.repeat(depth)
+
+  if (vnode.type === '#text') {
+    return `${indent}${vnode.text}`
+  }
+
+  // 속성 문자열
+  const attrs = Object.entries(vnode.props || {})
+    .map(([k, v]) => ` ${k}="${v}"`)
+    .join('')
+
+  // self-closing 태그
+  const selfClosing = ['img', 'br', 'hr', 'input', 'meta', 'link']
+  if (selfClosing.includes(vnode.type)) {
+    return `${indent}<${vnode.type}${attrs} />`
+  }
+
+  // 자식이 텍스트 하나뿐이면 한 줄로
+  if (vnode.children.length === 1 && vnode.children[0].type === '#text') {
+    return `${indent}<${vnode.type}${attrs}>${vnode.children[0].text}</${vnode.type}>`
+  }
+
+  // 자식이 없으면 한 줄로
+  if (vnode.children.length === 0) {
+    return `${indent}<${vnode.type}${attrs}></${vnode.type}>`
+  }
+
+  // 자식이 여러 개면 줄바꿈
+  const childrenHtml = vnode.children
+    .map(child => vnodeToHtml(child, depth + 1))
+    .join('\n')
+
+  return `${indent}<${vnode.type}${attrs}>\n${childrenHtml}\n${indent}</${vnode.type}>`
 }
 
 function showPatches(patches) {

@@ -760,6 +760,11 @@ button:disabled {
   background: var(--bg-card);
   border: 1px solid var(--border);
 }
+.diff-btn--preset {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+}
 
 .diff-result {
   background: var(--bg-secondary);
