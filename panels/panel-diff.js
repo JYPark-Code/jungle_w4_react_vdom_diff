@@ -16,19 +16,19 @@ let initialized = false
 
 const SAMPLE_HTML = `<div class="post-card">
   <div class="post-header">
-    <span class="post-avatar">🧑</span>
-    <span class="post-username">user_01</span>
+    <span class="avatar">🧑</span>
+    <span class="username">user_01</span>
   </div>
-  <p class="caption">오늘의 일상 ☀️</p>
-  <div class="likes-row">
-    <span class="heart">🤍</span>
-    <span class="count">127</span>
-    <span>명이 좋아합니다</span>
+  <div class="post-image">🖼️</div>
+  <div class="post-actions">
+    <span class="likes">❤️ 127개</span>
+    <span class="comments-count">💬 2개</span>
   </div>
-  <div class="comments">
-    <div class="comment"><strong>friend_01</strong> 멋지다! 👍</div>
-    <div class="comment"><strong>friend_02</strong> 나도 가고 싶다 ✈️</div>
-  </div>
+  <div class="post-caption">오늘의 일상 ☀️</div>
+  <ul class="comments-list">
+    <li>friend_01: 멋지다! 👍</li>
+    <li>friend_02: 나도 가고 싶다 ✈️</li>
+  </ul>
 </div>`
 
 export function initPanelDiff() {

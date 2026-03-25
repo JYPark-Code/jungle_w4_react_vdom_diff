@@ -1058,3 +1058,10 @@ button:disabled {
   color: var(--text-secondary);
   font-family: var(--font-main);
 }
+.mapping-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.mapping-link:hover {
+  text-decoration: underline;
+}

@@ -19,13 +19,13 @@ const TESTS = [
 ]
 
 const MAPPING_TABLE = [
-  ['domToVNode()',        'React.createElement()',        'DOM을 가상 객체로 변환'],
-  ['diff() 5케이스',      'Reconciler (ReactFiber.js)',    '두 트리 비교, 변경점 추출'],
-  ['patch()',             'react-dom commitWork()',        '변경점을 실제 DOM에 반영'],
-  ['key-diff',           'key prop 최적화',               '리스트 순서 변경 최적화'],
-  ['Fiber 스케줄러',      'scheduler 패키지 workLoop',     '작업 분할, 브라우저 양보'],
-  ['useState',           'ReactHooks.js',                 '함수 컴포넌트 상태 관리'],
-  ['Batch (큐 기반)',     'React 18 automatic batching',   '여러 setState를 모아서 한 번에'],
+  ['domToVNode()',        'React.createElement()',        'DOM을 가상 객체로 변환',      'https://github.com/facebook/react/blob/main/packages/react/src/jsx/ReactJSXElement.js'],
+  ['diff() 5케이스',      'Reconciler (ReactFiber.js)',    '두 트리 비교, 변경점 추출',    'https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberBeginWork.js'],
+  ['patch()',             'react-dom commitWork()',        '변경점을 실제 DOM에 반영',     'https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberCommitWork.js'],
+  ['key-diff',           'key prop 최적화',               '리스트 순서 변경 최적화',       'https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactChildFiber.js'],
+  ['Fiber 스케줄러',      'scheduler 패키지 workLoop',     '작업 분할, 브라우저 양보',     'https://github.com/facebook/react/blob/main/packages/scheduler/src/forks/Scheduler.js'],
+  ['useState',           'ReactHooks.js',                 '함수 컴포넌트 상태 관리',      'https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js'],
+  ['Batch (큐 기반)',     'React 18 automatic batching',   '여러 setState를 모아서 한 번에', 'https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberWorkLoop.js'],
 ]
 
 export function initPanelBenchmark() {
@@ -83,10 +83,10 @@ export function initPanelBenchmark() {
           </tr>
         </thead>
         <tbody>
-          ${MAPPING_TABLE.map(([ours, react, role]) => `
+          ${MAPPING_TABLE.map(([ours, react, role, link]) => `
             <tr>
               <td class="mapping-ours">${ours}</td>
-              <td class="mapping-react">${react}</td>
+              <td class="mapping-react"><a href="${link}" target="_blank" rel="noopener" class="mapping-link">${react} ↗</a></td>
               <td class="mapping-role">${role}</td>
             </tr>
           `).join('')}
