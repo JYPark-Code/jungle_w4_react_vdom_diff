@@ -205,31 +205,99 @@ function showPatches(patches) {
     return
   }
 
-  // 요약
+  // 각 패치 — 카드 형태
+  patches.forEach(p => {
+    const card = document.createElement('div')
+    card.className = `diff-patch-card diff-patch-card--${p.type.toLowerCase()}`
+
+    const icon = { CREATE: '🟢', REMOVE: '🔴', REPLACE: '🟡', TEXT: '🟡', PROPS: '🔵' }[p.type] || '⚪'
+    const label = { CREATE: 'ADD', REMOVE: 'DELETE', REPLACE: 'REPLACE', TEXT: 'UPDATE', PROPS: 'PROPS' }[p.type] || p.type
+    const nodeName = getNodeNameFromPatch(p)
+
+    // 헤더: 아이콘 + 라벨 + 노드 이름
+    card.innerHTML = `<div class="diff-patch-header">
+      <span class="diff-patch-icon">${icon}</span>
+      <span class="diff-patch-label">${label}</span>
+      <span class="diff-patch-node">${escapeHtml(nodeName)}</span>
+    </div>`
+
+    // 값 변경 표시
+    const body = document.createElement('div')
+    body.className = 'diff-patch-body'
+
+    switch (p.type) {
+      case PATCH_TYPES.TEXT:
+        body.innerHTML = `<div class="diff-line diff-line--del"><span class="diff-line-prefix">-</span> "${escapeHtml(p.oldText)}"</div>`
+          + `<div class="diff-line diff-line--add"><span class="diff-line-prefix">+</span> "${escapeHtml(p.newText)}"</div>`
+        break
+      case PATCH_TYPES.PROPS:
+        p.propPatches.forEach(pp => {
+          if (pp.action === 'SET') {
+            body.innerHTML += `<div class="diff-line diff-line--del"><span class="diff-line-prefix">-</span> ${pp.key}="${escapeHtml(pp.oldValue || '(없음)')}"</div>`
+              + `<div class="diff-line diff-line--add"><span class="diff-line-prefix">+</span> ${pp.key}="${escapeHtml(pp.value)}"</div>`
+          } else {
+            body.innerHTML += `<div class="diff-line diff-line--del"><span class="diff-line-prefix">-</span> ${pp.key} (제거됨)</div>`
+          }
+        })
+        break
+      case PATCH_TYPES.CREATE:
+        body.innerHTML = `<div class="diff-line diff-line--add"><span class="diff-line-prefix">+</span> &lt;${escapeHtml(p.newNode.type)}&gt; 새 노드 추가</div>`
+        break
+      case PATCH_TYPES.REMOVE:
+        body.innerHTML = `<div class="diff-line diff-line--del"><span class="diff-line-prefix">-</span> 노드 삭제됨</div>`
+        break
+      case PATCH_TYPES.REPLACE:
+        body.innerHTML = `<div class="diff-line diff-line--del"><span class="diff-line-prefix">-</span> 이전 노드</div>`
+          + `<div class="diff-line diff-line--add"><span class="diff-line-prefix">+</span> &lt;${escapeHtml(p.newNode.type)}&gt; 타입 교체</div>`
+        break
+    }
+    card.appendChild(body)
+    container.appendChild(card)
+  })
+
+  // 하단 요약
   const summary = document.createElement('div')
   summary.className = 'diff-patch-summary'
-  summary.textContent = `${patches.length}개 변경 감지 → DOM ${patches.length}회 업데이트`
+  const addCount = patches.filter(p => p.type === PATCH_TYPES.CREATE).length
+  const delCount = patches.filter(p => p.type === PATCH_TYPES.REMOVE).length
+  const modCount = patches.length - addCount - delCount
+  summary.innerHTML = `총 <strong>${patches.length}</strong>개 변경 감지 → DOM <strong>${patches.length}</strong>회 업데이트`
+    + (addCount ? ` | <span style="color:#51cf66">+${addCount} 추가</span>` : '')
+    + (delCount ? ` | <span style="color:#ff6b6b">-${delCount} 삭제</span>` : '')
+    + (modCount ? ` | <span style="color:#ffd43b">${modCount} 수정</span>` : '')
   container.appendChild(summary)
-
-  // 각 패치
-  patches.forEach(p => {
-    const item = document.createElement('div')
-    item.className = `diff-patch-item diff-patch-item--${p.type.toLowerCase()}`
-    item.textContent = formatPatch(p)
-    container.appendChild(item)
-  })
 }
 
-function formatPatch(p) {
-  const pathStr = `path=[${p.path.join(',')}]`
-  switch (p.type) {
-    case PATCH_TYPES.CREATE:  return `🟢 [CREATE]  ${pathStr}`
-    case PATCH_TYPES.REMOVE:  return `🔴 [REMOVE]  ${pathStr}`
-    case PATCH_TYPES.REPLACE: return `🟡 [REPLACE] ${pathStr}`
-    case PATCH_TYPES.TEXT:    return `🟡 [TEXT]    ${pathStr}  "${p.oldText}" → "${p.newText}"`
-    case PATCH_TYPES.PROPS:   return `🟡 [PROPS]   ${pathStr}  ${p.propPatches.map(pp => pp.action === 'SET' ? `${pp.key}="${pp.value}"` : `${pp.key} 제거`).join(', ')}`
-    default: return `[${p.type}] ${pathStr}`
+function getNodeNameFromPatch(p) {
+  // previousVNode에서 path를 따라가서 노드 이름 추출
+  let node = previousVNode
+  if (node && p.path) {
+    for (const idx of p.path) {
+      if (node && node.children && node.children[idx]) {
+        node = node.children[idx]
+      } else {
+        node = null
+        break
+      }
+    }
   }
+  if (node) {
+    if (node.type === '#text') return `"${node.text?.slice(0, 20) || ''}"`
+    let tag = node.type
+    if (node.props?.class) tag += `.${node.props.class.split(' ')[0]}`
+    return tag
+  }
+  if (p.newNode) {
+    let tag = p.newNode.type
+    if (p.newNode.props?.class) tag += `.${p.newNode.props.class.split(' ')[0]}`
+    return tag
+  }
+  return `path=[${p.path.join(',')}]`
+}
+
+function escapeHtml(str) {
+  if (!str) return ''
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 function updateButtons() {

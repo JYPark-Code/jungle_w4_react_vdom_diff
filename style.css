@@ -770,9 +770,15 @@ button:disabled {
   font-size: 0.8rem;
 }
 .diff-patch-summary {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: var(--spacing-sm) 0;
+  margin-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
+}
+.diff-patch-summary strong {
   color: var(--accent);
-  font-weight: bold;
-  margin-bottom: var(--spacing-sm);
 }
 .diff-patch-item {
   padding: 4px 8px;
@@ -780,11 +786,42 @@ button:disabled {
   margin-bottom: 4px;
 }
 .diff-patch-item--ok      { color: #28a745; }
-.diff-patch-item--create  { background: var(--hl-add); }
-.diff-patch-item--remove  { background: var(--hl-delete); }
-.diff-patch-item--replace { background: var(--hl-update); }
-.diff-patch-item--text    { background: var(--hl-update); }
-.diff-patch-item--props   { background: var(--hl-update); }
+
+/* 패치 카드 */
+.diff-patch-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: var(--spacing-sm);
+  overflow: hidden;
+}
+.diff-patch-card--create  { border-left: 3px solid #28a745; }
+.diff-patch-card--remove  { border-left: 3px solid #dc3545; }
+.diff-patch-card--replace { border-left: 3px solid #ffd43b; }
+.diff-patch-card--text    { border-left: 3px solid #ffd43b; }
+.diff-patch-card--props   { border-left: 3px solid #0095f6; }
+
+.diff-patch-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+.diff-patch-icon { font-size: 0.9rem; }
+.diff-patch-label {
+  font-weight: bold;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+.diff-patch-node {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+.diff-patch-body {
+  padding: 4px 0;
+}
 
 /* ===== 패널 4: History 뷰어 ===== */
 .history-demo {
