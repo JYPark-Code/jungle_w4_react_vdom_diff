@@ -189,7 +189,7 @@ sequenceDiagram
 ### Vanilla vs VDom — 인피니트 스크롤 문제
 
 ```mermaid
-graph TD
+graph LR
     subgraph VDOM["🟢 Mini React: diff + patch"]
         M1["스크롤 바닥 도달"] --> M2["Observer 발동"]
         M2 --> M3["smartRender() 호출"]
@@ -198,8 +198,13 @@ graph TD
         M5 --> M6["Observer 정상<br/>스크롤 계속 ✅"]
     end
 
-    M6 -.-> V1
+    style VDOM fill:#0d2117,stroke:#28a745,color:#f5f5f5
+    style M5 fill:#28a745,stroke:#28a745,color:#fff
+    style M6 fill:#28a745,stroke:#28a745,color:#fff
+```
 
+```mermaid
+graph LR
     subgraph VANILLA["🔴 Vanilla: innerHTML 전체 교체"]
         V1["스크롤 바닥 도달"] --> V2["Observer 발동"]
         V2 --> V3["render() 호출"]
@@ -209,11 +214,8 @@ graph TD
     end
 
     style VANILLA fill:#2d1117,stroke:#dc3545,color:#f5f5f5
-    style VDOM fill:#0d2117,stroke:#28a745,color:#f5f5f5
     style V4 fill:#dc3545,stroke:#dc3545,color:#fff
     style V6 fill:#dc3545,stroke:#dc3545,color:#fff
-    style M5 fill:#28a745,stroke:#28a745,color:#fff
-    style M6 fill:#28a745,stroke:#28a745,color:#fff
 ```
 
 ---
