@@ -29,20 +29,12 @@ export function initPanelFeed() {
 
     <!-- 공통 컨트롤 -->
     <div class="common-controls">
-      <div class="controls-group">
-        <div class="controls-label">🔬 VDom은 무조건 빠를까?</div>
-        <div class="controls">
-          <button id="ctrl-like-nobatch" class="btn-danger">❤️ 좋아요 1000회 (배치 없음)</button>
-          <button id="ctrl-like1000" class="btn-success">❤️ 좋아요 1000회 (배치 적용)</button>
-        </div>
-      </div>
-      <div class="controls-group">
-        <div class="controls-label">🎮 기능 테스트</div>
-        <div class="controls">
-          <button id="ctrl-add10">📝 포스트 +10개</button>
-          <button id="ctrl-comment50">💬 댓글 50개</button>
-          <button id="ctrl-reset">🔄 리셋</button>
-        </div>
+      <div class="controls">
+        <button id="ctrl-like1000">❤️ 좋아요 1000회</button>
+        <button id="ctrl-like-nobatch" class="btn-danger">❤️ 좋아요 1000회 (배치 없음)</button>
+        <button id="ctrl-add10">📝 포스트 +10개</button>
+        <button id="ctrl-comment50">💬 댓글 50개</button>
+        <button id="ctrl-reset">🔄 리셋</button>
       </div>
       <div class="insight-box" id="insight-box"></div>
       <div class="stats-bar" id="stats-bar">
@@ -203,14 +195,12 @@ function handleBulkLikeNoBatch() {
   vanillaBulkLike(postId, 1000)
   const vanillaTime = performance.now() - vanillaStart
 
-  // Mini React (배치 없음!) — 매번 diff+patch
+  // Mini React만 (배치 없음!) — 매번 diff+patch
   const miniStart = performance.now()
   miniReactBulkLikeNoBatch(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  const realTime = miniTime * 0.85
-
-  updateStatsWithTime(vanillaTime, miniTime, realTime)
+  updateStatsWithTime(vanillaTime, miniTime, null)
   showInsight(
     '🔴 배치 없음: Mini React가 더 느립니다!',
     `VDom은 매번 트리 생성 + diff + patch를 하니까 오버헤드가 생겨요.\n`
@@ -329,12 +319,13 @@ function updateStatsWithTime(vanillaTime, miniTime, realTime) {
 
   vEl.textContent = `${vanillaTime.toFixed(1)}ms`
   mEl.textContent = `${miniTime.toFixed(1)}ms`
-  rEl.textContent = `~${realTime.toFixed(1)}ms`
+  rEl.textContent = realTime != null ? `~${realTime.toFixed(1)}ms` : '-'
 
   // 색상 표시
-  const times = [vanillaTime, miniTime, realTime]
+  const times = [vanillaTime, miniTime, realTime].filter(t => t != null)
   const min = Math.min(...times)
-  ;[vEl, mEl, rEl].forEach((el, i) => {
-    el.className = 'stat-time ' + (times[i] === min ? 'stat-fast' : times[i] > min * 3 ? 'stat-slow' : '')
+  ;[[vEl, vanillaTime], [mEl, miniTime], [rEl, realTime]].forEach(([el, t]) => {
+    if (t == null) { el.className = 'stat-time'; return }
+    el.className = 'stat-time ' + (t <= min * 1.1 ? 'stat-fast' : t > min * 3 ? 'stat-slow' : '')
   })
 }
