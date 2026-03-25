@@ -231,5 +231,18 @@ export function miniReactBulkLike(postId, times) {
   }
   smartRender()  // 마지막에 딱 1번만 렌더!
 }
+// [왜] 배치가 없으면?
+// 매번 VNode 트리 생성 + diff + patch를 반복해요
+// VDom 오버헤드 때문에 오히려 Vanilla보다 느려요!
+// → "VDom이 무조건 빠른 게 아니라, 배치가 있어야 빠르다"
+export function miniReactBulkLikeNoBatch(postId, times) {
+  const post = posts.find(p => p.id === postId)
+  if (!post) return
+  for (let i = 0; i < times; i++) {
+    post.liked = !post.liked
+    post.likes += post.liked ? 1 : -1
+    smartRender()  // 매번 렌더! (배치 없음)
+  }
+}
 export function getMiniReactRenderCount() { return renderCount }
 export function getMiniReactPosts() { return posts }

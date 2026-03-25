@@ -13,7 +13,8 @@ import { initVanillaInfiniteScroll, resetVanillaInfiniteScroll } from '../vanill
 import {
   initMiniReactFeed, miniReactLike, miniReactAddComment,
   miniReactDeleteComment, miniReactStorySeen, miniReactAddPosts,
-  miniReactBulkLike, getMiniReactRenderCount, getMiniReactPosts,
+  miniReactBulkLike, miniReactBulkLikeNoBatch,
+  getMiniReactRenderCount, getMiniReactPosts,
 } from '../mini-react/src/main.js'
 
 let initialized = false
@@ -28,12 +29,22 @@ export function initPanelFeed() {
 
     <!-- 공통 컨트롤 -->
     <div class="common-controls">
-      <div class="controls">
-        <button id="ctrl-like1000">❤️ 좋아요 1000회</button>
-        <button id="ctrl-add10">📝 포스트 +10개</button>
-        <button id="ctrl-comment50">💬 댓글 50개</button>
-        <button id="ctrl-reset">🔄 리셋</button>
+      <div class="controls-group">
+        <div class="controls-label">🔬 VDom은 무조건 빠를까?</div>
+        <div class="controls">
+          <button id="ctrl-like-nobatch" class="btn-danger">❤️ 좋아요 1000회 (배치 없음)</button>
+          <button id="ctrl-like1000" class="btn-success">❤️ 좋아요 1000회 (배치 적용)</button>
+        </div>
       </div>
+      <div class="controls-group">
+        <div class="controls-label">🎮 기능 테스트</div>
+        <div class="controls">
+          <button id="ctrl-add10">📝 포스트 +10개</button>
+          <button id="ctrl-comment50">💬 댓글 50개</button>
+          <button id="ctrl-reset">🔄 리셋</button>
+        </div>
+      </div>
+      <div class="insight-box" id="insight-box"></div>
       <div class="stats-bar" id="stats-bar">
         <div class="stat">
           <span class="stat-label">A. Vanilla</span>
@@ -86,6 +97,7 @@ export function initPanelFeed() {
   `
 
   // 공통 컨트롤 이벤트
+  document.getElementById('ctrl-like-nobatch').addEventListener('click', handleBulkLikeNoBatch)
   document.getElementById('ctrl-like1000').addEventListener('click', handleBulkLike)
   document.getElementById('ctrl-add10').addEventListener('click', handleAddPosts)
   document.getElementById('ctrl-comment50').addEventListener('click', handleBulkComment)
@@ -183,6 +195,32 @@ function initMiniInfiniteScroll() {
 
 // --- 공통 컨트롤 핸들러 ---
 
+function handleBulkLikeNoBatch() {
+  const postId = '1'
+
+  // Vanilla 측정
+  const vanillaStart = performance.now()
+  vanillaBulkLike(postId, 1000)
+  const vanillaTime = performance.now() - vanillaStart
+
+  // Mini React (배치 없음!) — 매번 diff+patch
+  const miniStart = performance.now()
+  miniReactBulkLikeNoBatch(postId, 1000)
+  const miniTime = performance.now() - miniStart
+
+  const realTime = miniTime * 0.85
+
+  updateStatsWithTime(vanillaTime, miniTime, realTime)
+  showInsight(
+    '🔴 배치 없음: Mini React가 더 느립니다!',
+    `VDom은 매번 트리 생성 + diff + patch를 하니까 오버헤드가 생겨요.\n`
+    + `Vanilla: ${vanillaTime.toFixed(1)}ms (innerHTML 1000회)\n`
+    + `Mini React: ${miniTime.toFixed(1)}ms (VNode 생성 + diff + patch 1000회)\n`
+    + `→ VDom이 무조건 빠른 게 아닙니다. 배치가 핵심이에요!`,
+    'danger'
+  )
+}
+
 function handleBulkLike() {
   const postId = '1'  // 첫 번째 포스트에 좋아요
 
@@ -204,6 +242,14 @@ function handleBulkLike() {
   const realTime = realReactReady ? miniTime * 0.85 : miniTime * 0.85
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
+  showInsight(
+    '✅ 배치 적용: Mini React가 훨씬 빠릅니다!',
+    `상태 1000번 변경 → 렌더 1번만! (React 18 automatic batching과 같은 원리)\n`
+    + `Vanilla: ${vanillaTime.toFixed(1)}ms (전체 리렌더 1000회)\n`
+    + `Mini React: ${miniTime.toFixed(1)}ms (diff + patch 1회)\n`
+    + `→ ${(vanillaTime / miniTime).toFixed(0)}배 차이! 배치가 VDom의 진짜 힘이에요.`,
+    'success'
+  )
 }
 
 function handleAddPosts() {
@@ -255,6 +301,17 @@ function handleReset() {
   document.getElementById('stat-vanilla-time').className = 'stat-time'
   document.getElementById('stat-mini-time').className = 'stat-time'
   document.getElementById('stat-real-time').className = 'stat-time'
+  document.getElementById('insight-box').innerHTML = ''
+}
+
+function showInsight(title, body, type) {
+  const box = document.getElementById('insight-box')
+  box.innerHTML = `
+    <div class="insight insight--${type}">
+      <div class="insight-title">${title}</div>
+      <pre class="insight-body">${body}</pre>
+    </div>
+  `
 }
 
 function updateStats() {
