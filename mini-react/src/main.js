@@ -217,14 +217,19 @@ export function miniReactAddPosts(count) {
   }
   smartRender()
 }
+// [왜] Batch
+// setState를 1000번 호출해도 렌더링은 1번만!
+// 상태 변경을 모아두고 마지막에 한 번만 diff + patch
+// 이게 React 18의 automatic batching과 같은 원리예요
 export function miniReactBulkLike(postId, times) {
   const post = posts.find(p => p.id === postId)
   if (!post) return
   for (let i = 0; i < times; i++) {
     post.liked = !post.liked
     post.likes += post.liked ? 1 : -1
-    smartRender()
+    // 렌더 안 함 — 상태만 쌓아요
   }
+  smartRender()  // 마지막에 딱 1번만 렌더!
 }
 export function getMiniReactRenderCount() { return renderCount }
 export function getMiniReactPosts() { return posts }

@@ -9,6 +9,7 @@ import {
   vanillaDeleteComment, vanillaStorySeen, vanillaAddPosts,
   vanillaBulkLike, getVanillaRenderCount, getVanillaPosts,
 } from '../vanilla/src/feed.js'
+import { initVanillaInfiniteScroll, resetVanillaInfiniteScroll } from '../vanilla/src/infinite.js'
 import {
   initMiniReactFeed, miniReactLike, miniReactAddComment,
   miniReactDeleteComment, miniReactStorySeen, miniReactAddPosts,
@@ -101,7 +102,38 @@ export function initPanelFeed() {
 function initFeeds() {
   initVanillaFeed(document.getElementById('feed-vanilla'))
   initMiniReactFeed(document.getElementById('feed-mini'))
+  // 인피니트 스크롤 활성화
+  initVanillaInfiniteScroll()
+  initMiniInfiniteScroll()
   updateStats()
+}
+
+// Mini React 인피니트 스크롤
+function initMiniInfiniteScroll() {
+  let isLoading = false
+  let loadCount = 0
+  const maxLoads = 5
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !isLoading && loadCount < maxLoads) {
+        isLoading = true
+        loadCount++
+        setTimeout(() => {
+          miniReactAddPosts(10)
+          isLoading = false
+        }, 300)
+      }
+    })
+  }, { threshold: 0.1 })
+
+  const check = setInterval(() => {
+    const sentinel = document.getElementById('mini-sentinel')
+    if (sentinel) {
+      observer.observe(sentinel)
+      clearInterval(check)
+    }
+  }, 200)
 }
 
 // --- 공통 컨트롤 핸들러 ---
@@ -167,6 +199,7 @@ function handleBulkComment() {
 function handleReset() {
   initialized = false
   AppState.resetRenderCounts()
+  resetVanillaInfiniteScroll()
   initFeeds()
   document.getElementById('stat-vanilla-time').textContent = '-'
   document.getElementById('stat-mini-time').textContent = '-'
