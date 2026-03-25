@@ -330,7 +330,7 @@ button:disabled {
 }
 /* 좋아요 — Instagram 스타일: 빈 하트 → 빨간 채움 */
 .post-actions {
-  padding: 6px var(--spacing-md) 0;
+  padding: 10px var(--spacing-md) 0;
   margin-left: -2px;
 }
 .btn-like {
@@ -355,7 +355,7 @@ button:disabled {
 .like-count {
   font-weight: 600;
   font-size: 0.8rem;
-  padding: 4px var(--spacing-md) 4px;
+  padding: 6px var(--spacing-md) 4px;
 }
 
 /* 캡션 — Instagram 스타일 */
