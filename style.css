@@ -139,7 +139,7 @@ button:disabled {
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 .log-box pre {
   white-space: pre-wrap;
@@ -515,7 +515,7 @@ button:disabled {
   max-height: 500px;
   overflow-y: auto;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 1rem;
 }
 .tree-empty {
   color: var(--text-secondary);
@@ -598,7 +598,7 @@ button:disabled {
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-md);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 .diff-summary-header {
   display: flex;
@@ -629,7 +629,7 @@ button:disabled {
 }
 .diff-line {
   padding: 3px 12px;
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--text-primary);
   display: flex;
   align-items: baseline;
@@ -677,7 +677,7 @@ button:disabled {
 }
 .patches-list {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 .patch-item {
   padding: 4px 8px;
@@ -719,7 +719,7 @@ button:disabled {
   padding: var(--spacing-md);
   min-height: 450px;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 .diff-render-area img {
   width: 100%;
@@ -736,7 +736,7 @@ button:disabled {
   padding: var(--spacing-md);
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
   line-height: 1.5;
   resize: both;
   outline: none;
@@ -780,12 +780,12 @@ button:disabled {
 }
 .diff-patches-list {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 .diff-patch-summary {
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
   padding: var(--spacing-sm) 0;
   margin-top: var(--spacing-sm);
   border-top: 1px solid var(--border);
@@ -866,7 +866,7 @@ button:disabled {
   max-height: 400px;
   overflow-y: auto;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 .history-item {
   display: flex;
@@ -1045,7 +1045,7 @@ button:disabled {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 .mapping-table th {
   text-align: left;
