@@ -41,12 +41,20 @@ function smartRender() {
     // AppState에 초기 VNode 공유
     AppState.update({ currentVNode: newVNode, previousVNode: null, lastPatches: [] })
   } else {
-    // 이후 렌더: diff로 변경점만 찾아서 patch!
+    // diff로 변경점 감지 (VDom Inspector 등에 공유)
     const patches = diff(currentVNode, newVNode)
+
+    // 전체 재렌더 — DOM과 VNode의 불일치 문제를 방지
+    // (이벤트 위임이 document 레벨이므로 재렌더해도 이벤트 유지)
+    container.innerHTML = ''
+    const dom = renderDOM(newVNode)
+    container.appendChild(dom)
+
+    // 하이라이트는 새 DOM에 적용
     if (patches.length > 0) {
-      patch(container.firstChild, patches)
-      highlightPatches(container.firstChild, patches)
+      highlightPatches(dom, patches)
     }
+
     // AppState에 패치 정보 공유
     AppState.update({
       previousVNode: currentVNode,
