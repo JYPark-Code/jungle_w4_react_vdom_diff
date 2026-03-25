@@ -231,23 +231,24 @@ function handleBulkLikeNoBatch() {
   miniReactBulkLikeNoBatch(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React (배치 적용 상태) — 배치 적용된 Mini React를 실측해서 비교 기준으로
+  // Real React (배치 없음) — 불변 배열 map 1000회 시뮬레이션
   sendToRealReact({ type: 'bulk-like', postId: '1', times: 1000 })
   let realTime = null
   if (realReactReady) {
-    // 배치 적용 Mini React를 한 번 돌려서 Real React 수준 추정
-    const batchStart = performance.now()
-    miniReactBulkLike('2', 1000)
-    realTime = performance.now() - batchStart
+    const realStart = performance.now()
+    let arr = Array.from({ length: 10 }, (_, i) => ({ id: i, likes: 100, liked: false }))
+    for (let i = 0; i < 1000; i++) {
+      arr = arr.map((p, idx) => idx === 0 ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p)
+    }
+    realTime = performance.now() - realStart
   }
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
-  const realStr = realTime != null ? `Real React (배치 적용): ${realTime.toFixed(1)}ms — automatic batching으로 렌더 1회\n\n` : ''
   showInsight(
-    '🔴 배치 없음: Mini React가 오히려 더 느립니다!',
-    `Mini React (배치 없음): ${miniTime.toFixed(1)}ms — 매번 VNode 생성 + diff + patch\n`
-    + `Vanilla: ${vanillaTime.toFixed(1)}ms — innerHTML 1000회\n`
-    + realStr
+    '🔴 배치 없음: 3버전 모두 매번 렌더링합니다!',
+    `Vanilla: ${vanillaTime.toFixed(1)}ms — innerHTML 1000회\n`
+    + `Mini React: ${miniTime.toFixed(1)}ms — VNode 생성 + diff + 재렌더 1000회\n`
+    + (realTime != null ? `Real React: ${realTime.toFixed(1)}ms — 불변 배열 map() 1000회\n\n` : '')
     + `→ VDom이 무조건 빠른 게 아닙니다. 배치가 핵심이에요!`,
     'danger'
   )
