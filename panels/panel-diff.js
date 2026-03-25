@@ -19,7 +19,7 @@ const SAMPLE_HTML = `<div class="post-card">
     <span class="avatar">🧑</span>
     <span class="username">user_01</span>
   </div>
-  <div class="post-image">🖼️</div>
+  <div class="post-image"><img src="https://picsum.photos/seed/1/600/600" alt="post" /></div>
   <div class="post-actions">
     <span class="likes">❤️ 127개</span>
     <span class="comments-count">💬 2개</span>

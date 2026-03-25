@@ -219,6 +219,7 @@ button:disabled {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
 }
 .stat {
   display: flex;
@@ -240,7 +241,7 @@ button:disabled {
 }
 .stat-time {
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 .stat-slow { color: var(--like-active); }
@@ -718,6 +719,12 @@ button:disabled {
   min-height: 280px;
   font-family: var(--font-mono);
   font-size: 0.8rem;
+}
+.diff-render-area img {
+  width: 100%;
+  border-radius: var(--radius-md);
+  display: block;
+  margin: var(--spacing-sm) 0;
 }
 .diff-editor {
   width: 100%;

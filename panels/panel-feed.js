@@ -61,21 +61,21 @@ export function initPanelFeed() {
       <div class="feed-column">
         <div class="column-header">
           <h3>A. Vanilla JS</h3>
-          <span class="column-tag column-tag--vanilla">DOM 변경마다 전체 재렌더링</span>
+          <span class="column-tag column-tag--vanilla">DOM</span>
         </div>
         <div class="feed-container" id="feed-vanilla"></div>
       </div>
       <div class="feed-column">
         <div class="column-header">
           <h3>B. Mini React</h3>
-          <span class="column-tag column-tag--mini">Virtual DOM + Diff + Fiber</span>
+          <span class="column-tag column-tag--mini">VDOM</span>
         </div>
         <div class="feed-container" id="feed-mini"></div>
       </div>
       <div class="feed-column">
         <div class="column-header">
           <h3>C. Real React</h3>
-          <span class="column-tag column-tag--real">React 18 + Automatic Batching</span>
+          <span class="column-tag column-tag--real">React 18</span>
         </div>
         <div class="feed-container" id="feed-real">
           <iframe id="real-react-iframe" src="http://localhost:3001" class="real-react-iframe"></iframe>
