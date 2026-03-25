@@ -154,6 +154,13 @@ function onStateChange(state) {
 
   newTreeEl.innerHTML = ''
   newTreeEl.appendChild(renderTree(state.currentVNode, [], patchMap, expandPaths, 'new'))
+
+  // 변경 사항이 있으면 diff 요약 블록으로 자동 스크롤
+  if (patches.length > 0) {
+    setTimeout(() => {
+      diffBlock.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
 }
 
 // --- GitHub diff 라인 생성 ---
