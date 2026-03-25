@@ -540,12 +540,11 @@ button:disabled {
   display: block;
   padding: 2px 8px;
   border-radius: 3px;
-  color: #8be9fd;
+  color: var(--text-primary);
   line-height: 1.5;
 }
-/* 변경 없는 노드 — 흰색이지만 하이라이트 없음 */
+/* 변경 없는 노드 — 흰색 */
 .tree-label--dim {
-  opacity: 0.55;
   color: var(--text-primary);
 }
 /* 삭제/이전값 — 빨간 배경 */
@@ -588,6 +587,82 @@ button:disabled {
   display: block;
   padding: 1px 0 1px 16px;
 }
+
+/* GitHub diff 요약 블록 */
+.diff-summary-block {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.diff-summary-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.diff-summary-stat {
+  font-weight: bold;
+}
+.diff-summary-stat--add { color: #51cf66; }
+.diff-summary-stat--del { color: #ff6b6b; }
+.diff-file {
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.diff-file-header {
+  background: var(--bg-card);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+.diff-line {
+  padding: 3px 12px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.diff-line--del {
+  background: rgba(220, 53, 69, 0.15);
+  border-left: 3px solid #dc3545;
+}
+.diff-line--add {
+  background: rgba(40, 167, 69, 0.15);
+  border-left: 3px solid #28a745;
+}
+.diff-line-prefix {
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 12px;
+}
+.diff-line--del .diff-line-prefix { color: #ff6b6b; }
+.diff-line--add .diff-line-prefix { color: #51cf66; }
+
+/* 트리 접기/펼치기 */
+.tree-toggle {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  margin-bottom: var(--spacing-sm);
+}
+.tree-toggle:hover { color: var(--text-primary); }
 
 .vdom-patches {
   background: var(--bg-secondary);
