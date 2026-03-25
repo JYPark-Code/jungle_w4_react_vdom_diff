@@ -128,7 +128,8 @@ function buildFeedVNode() {
   )
 }
 
-// --- 이벤트 바인딩 (렌더 후 매번) ---
+// --- 이벤트 위임 (container에 한 번만 바인딩) ---
+let eventsBound = false
 function bindEvents() {
   if (!container) return
 
@@ -136,39 +137,49 @@ function bindEvents() {
   const storyBar = container.querySelector('.story-bar')
   if (storyBar) enableDragScroll(storyBar)
 
-  // 좋아요
-  container.querySelectorAll('.btn-like').forEach(btn => {
-    btn.onclick = () => handleLike(btn.dataset.id)
-  })
+  // 이벤트 위임은 한 번만 등록 — DOM이 바뀌어도 동작
+  if (eventsBound) return
+  eventsBound = true
 
-  // 댓글 추가
-  container.querySelectorAll('.btn-comment').forEach(btn => {
-    btn.onclick = () => {
-      const card = btn.closest('.post-card')
+  container.addEventListener('click', (e) => {
+    // 좋아요
+    const likeBtn = e.target.closest('.btn-like')
+    if (likeBtn && likeBtn.dataset.id) {
+      handleLike(likeBtn.dataset.id)
+      return
+    }
+
+    // 댓글 게시 버튼
+    const commentBtn = e.target.closest('.btn-comment')
+    if (commentBtn) {
+      const card = commentBtn.closest('.post-card')
       const input = card.querySelector('.comment-input')
-      handleAddComment(btn.dataset.postId, input.value)
+      handleAddComment(commentBtn.dataset.postId, input.value)
       input.value = ''
+      return
+    }
+
+    // 댓글 삭제
+    const deleteBtn = e.target.closest('.btn-delete-comment')
+    if (deleteBtn) {
+      handleDeleteComment(deleteBtn.dataset.postId, deleteBtn.dataset.commentId)
+      return
+    }
+
+    // 스토리
+    const storyItem = e.target.closest('.story-item')
+    if (storyItem && storyItem.dataset.id) {
+      handleStorySeen(storyItem.dataset.id)
+      return
     }
   })
 
   // 댓글 입력 엔터
-  container.querySelectorAll('.comment-input').forEach(input => {
-    input.onkeydown = (e) => {
-      if (e.key === 'Enter') {
-        handleAddComment(input.dataset.postId, input.value)
-        input.value = ''
-      }
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.classList.contains('comment-input')) {
+      handleAddComment(e.target.dataset.postId, e.target.value)
+      e.target.value = ''
     }
-  })
-
-  // 댓글 삭제
-  container.querySelectorAll('.btn-delete-comment').forEach(btn => {
-    btn.onclick = () => handleDeleteComment(btn.dataset.postId, btn.dataset.commentId)
-  })
-
-  // 스토리
-  container.querySelectorAll('.story-item').forEach(item => {
-    item.onclick = () => handleStorySeen(item.dataset.id)
   })
 }
 
