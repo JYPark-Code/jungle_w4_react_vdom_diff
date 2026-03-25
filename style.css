@@ -429,3 +429,99 @@ button:disabled {
   font-size: 0.75rem;
   margin-top: 4px;
 }
+
+/* ===== 패널 2: VDom Inspector ===== */
+.vdom-summary {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.vdom-summary strong {
+  color: var(--accent);
+}
+
+.vdom-trees {
+  margin-bottom: var(--spacing-md);
+}
+.tree-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+.tree-container {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  max-height: 500px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+.tree-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.tree-node {
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+  margin: 2px 0;
+}
+.tree-label {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: #8be9fd;
+}
+.tree-label--text {
+  color: #f1fa8c;
+}
+.tree-label--changed {
+  background: var(--hl-update);
+  color: #fff;
+  font-weight: bold;
+}
+.tree-label--old-changed {
+  background: var(--hl-delete);
+  color: #fff;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.tree-children {
+  margin-left: 4px;
+}
+.tree-more {
+  color: var(--text-secondary);
+  font-style: italic;
+  padding-left: 16px;
+}
+
+.vdom-patches {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+.vdom-patches .tree-title {
+  margin-bottom: var(--spacing-sm);
+}
+.patches-list {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.patch-item {
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+.patch-item--create  { background: var(--hl-add); }
+.patch-item--remove  { background: var(--hl-delete); }
+.patch-item--replace { background: var(--hl-update); }
+.patch-item--text    { background: var(--hl-update); }
+.patch-item--props   { background: var(--hl-update); }
