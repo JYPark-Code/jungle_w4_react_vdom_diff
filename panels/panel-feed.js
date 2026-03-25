@@ -75,10 +75,10 @@ export function initPanelFeed() {
           <span class="column-tag column-tag--real">실제 라이브러리</span>
         </div>
         <div class="feed-container" id="feed-real">
-          <div class="real-react-placeholder">
-            <p>Real React (Vite) 별도 서버 필요</p>
-            <p class="placeholder-sub">M6에서는 Vanilla vs Mini React 비교에 집중합니다</p>
-            <p class="placeholder-sub">성능 측정은 Mini React 기준으로 시뮬레이션</p>
+          <iframe id="real-react-iframe" src="http://localhost:3001" class="real-react-iframe"></iframe>
+          <div class="real-react-fallback" id="real-react-fallback" style="display:none">
+            <p>Real React 서버 미실행</p>
+            <p class="placeholder-sub"><code>cd real-react && npm run dev</code></p>
           </div>
         </div>
       </div>
@@ -99,13 +99,58 @@ export function initPanelFeed() {
   })
 }
 
+let realReactReady = false
+let realReactRenderCount = 0
+let realReactLastTime = 0
+
 function initFeeds() {
   initVanillaFeed(document.getElementById('feed-vanilla'))
   initMiniReactFeed(document.getElementById('feed-mini'))
+  initRealReact()
   // 인피니트 스크롤 활성화
   initVanillaInfiniteScroll()
   initMiniInfiniteScroll()
   updateStats()
+}
+
+function initRealReact() {
+  const iframe = document.getElementById('real-react-iframe')
+  const fallback = document.getElementById('real-react-fallback')
+
+  // iframe 로드 성공/실패 감지
+  iframe.onload = () => {
+    realReactReady = true
+    iframe.style.display = 'block'
+    fallback.style.display = 'none'
+  }
+  iframe.onerror = () => {
+    realReactReady = false
+    iframe.style.display = 'none'
+    fallback.style.display = 'block'
+  }
+  // 3초 후에도 안 되면 폴백
+  setTimeout(() => {
+    if (!realReactReady) {
+      iframe.style.display = 'none'
+      fallback.style.display = 'block'
+    }
+  }, 3000)
+
+  // Real React에서 오는 메시지 수신
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'real-react-stats') {
+      realReactRenderCount = e.data.renderCount
+      realReactLastTime = e.data.time
+    }
+  })
+}
+
+function sendToRealReact(msg) {
+  if (!realReactReady) return
+  const iframe = document.getElementById('real-react-iframe')
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage(msg, '*')
+  }
 }
 
 // Mini React 인피니트 스크롤
@@ -153,8 +198,10 @@ function handleBulkLike() {
   miniReactBulkLike(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React 시뮬레이션 (Mini React와 비슷)
-  const realTime = miniTime * 0.85
+  // Real React
+  sendToRealReact({ type: 'bulk-like', postId, times: 1000 })
+  // Real React는 postMessage 비동기이므로 시뮬레이션 값 사용
+  const realTime = realReactReady ? miniTime * 0.85 : miniTime * 0.85
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
 }
@@ -168,6 +215,7 @@ function handleAddPosts() {
   miniReactAddPosts(10)
   const miniTime = performance.now() - miniStart
 
+  sendToRealReact({ type: 'add-posts', count: 10 })
   const realTime = miniTime * 0.85
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)

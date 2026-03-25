@@ -419,11 +419,25 @@ button:disabled {
   height: 20px;
 }
 
-/* Real React placeholder */
-.real-react-placeholder {
+/* Real React iframe */
+.real-react-iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--bg-panel);
+}
+.real-react-fallback {
   text-align: center;
   padding: var(--spacing-lg);
   color: var(--text-secondary);
+}
+.real-react-fallback code {
+  background: var(--bg-card);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
 }
 .placeholder-sub {
   font-size: 0.75rem;
