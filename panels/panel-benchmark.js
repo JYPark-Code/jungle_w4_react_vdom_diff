@@ -112,16 +112,19 @@ export function initPanelBenchmark() {
 // --- Real React iframe 통신 ---
 
 function isRealReactAvailable() {
-  const iframe = document.getElementById('real-react-iframe')
-  return iframe && iframe.contentWindow
+  // panel-feed.js에서 iframe 로드 성공 시 설정하는 전역 플래그 확인
+  return window.__realReactReady === true
 }
 
 function sendBench(testId) {
   if (!isRealReactAvailable()) return false
   try {
     const iframe = document.getElementById('real-react-iframe')
-    iframe.contentWindow.postMessage({ type: `bench-${testId}` }, '*')
-    return true
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ type: `bench-${testId}` }, '*')
+      return true
+    }
+    return false
   } catch (e) {
     return false
   }

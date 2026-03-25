@@ -9,7 +9,7 @@ export const createPost = (id) => ({
     avatar: ['🧑','👩','🧔','👧'][id % 4],
   },
   image: `https://picsum.photos/seed/${id}/600/600`,
-  likes: Math.floor(Math.random() * 500) + 10,
+  likes: (id * 37 + 13) % 500 + 10,  // id 기반 고정값 (3버전 동일)
   liked: false,
   comments: [
     { id: `c${id}_1`, user: 'friend_01', text: '멋지다! 👍' },

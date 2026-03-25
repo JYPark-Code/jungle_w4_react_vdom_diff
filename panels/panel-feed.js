@@ -124,11 +124,13 @@ function initRealReact() {
   // iframe 로드 성공/실패 감지
   iframe.onload = () => {
     realReactReady = true
+    window.__realReactReady = true  // 벤치마크 패널에서도 확인 가능
     iframe.style.display = 'block'
     fallback.style.display = 'none'
   }
   iframe.onerror = () => {
     realReactReady = false
+    window.__realReactReady = false
     iframe.style.display = 'none'
     fallback.style.display = 'block'
   }
@@ -137,6 +139,7 @@ function initRealReact() {
   // 5초 후에도 안 되면 폴백
   setTimeout(() => {
     if (!realReactReady) {
+      window.__realReactReady = false
       iframe.style.display = 'none'
       fallback.style.display = 'block'
     }
