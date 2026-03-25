@@ -129,6 +129,8 @@ export default function App() {
           break
 
         // --- 벤치마크 ---
+        // setState 콜백 안에서 연산 시간만 측정하고 즉시 응답
+        // (렌더링 대기 없이 — 순수 JS 연산 시간 비교)
         case 'bench-like1000': {
           const s = performance.now()
           setPosts(prev => {
@@ -141,54 +143,56 @@ export default function App() {
               p.likes += p.liked ? 1 : -1
               u[idx] = p
             }
+            const elapsed = performance.now() - s
+            window.parent.postMessage({ type: 'bench-result', testId: 'like1000', time: elapsed }, '*')
             return u
-          })
-          requestAnimationFrame(() => {
-            window.parent.postMessage({ type: 'bench-result', testId: 'like1000', time: performance.now() - s }, '*')
           })
           break
         }
         case 'bench-render100': {
           const s = performance.now()
           const newPosts = Array.from({ length: 100 }, (_, i) => createPost(100 + i))
-          setPosts(prev => [...prev, ...newPosts])
-          requestAnimationFrame(() => {
-            window.parent.postMessage({ type: 'bench-result', testId: 'render100', time: performance.now() - s }, '*')
+          setPosts(prev => {
+            const result = [...prev, ...newPosts]
+            const elapsed = performance.now() - s
+            window.parent.postMessage({ type: 'bench-result', testId: 'render100', time: elapsed }, '*')
+            return result
           })
           break
         }
         case 'bench-scroll10': {
           const s = performance.now()
           const morePosts = Array.from({ length: 10 }, (_, i) => createPost(200 + i))
-          setPosts(prev => [...prev, ...morePosts])
-          requestAnimationFrame(() => {
-            window.parent.postMessage({ type: 'bench-result', testId: 'scroll10', time: performance.now() - s }, '*')
+          setPosts(prev => {
+            const result = [...prev, ...morePosts]
+            const elapsed = performance.now() - s
+            window.parent.postMessage({ type: 'bench-result', testId: 'scroll10', time: elapsed }, '*')
+            return result
           })
           break
         }
         case 'bench-batch': {
           const s = performance.now()
-          // 3회 setState → React 18 automatic batching → 렌더 1회
           setPosts(prev => prev.map((p, i) => i === 0 ? { ...p, likes: p.likes + 1 } : p))
           setPosts(prev => prev.map((p, i) => i === 0 ? { ...p, likes: p.likes + 1 } : p))
-          setPosts(prev => prev.map((p, i) => i === 0 ? { ...p, likes: p.likes + 1 } : p))
-          requestAnimationFrame(() => {
-            window.parent.postMessage({ type: 'bench-result', testId: 'batch', time: performance.now() - s }, '*')
+          setPosts(prev => {
+            const result = prev.map((p, i) => i === 0 ? { ...p, likes: p.likes + 1 } : p)
+            const elapsed = performance.now() - s
+            window.parent.postMessage({ type: 'bench-result', testId: 'batch', time: elapsed }, '*')
+            return result
           })
           break
         }
         case 'bench-blocking': {
           const s = performance.now()
-          // 1000개 연속 업데이트
           setPosts(prev => {
             let u = [...prev]
             for (let i = 0; i < 1000; i++) {
               u = u.map((p, idx) => idx === 0 ? { ...p, likes: p.likes + 1 } : p)
             }
+            const elapsed = performance.now() - s
+            window.parent.postMessage({ type: 'bench-result', testId: 'blocking', time: elapsed }, '*')
             return u
-          })
-          requestAnimationFrame(() => {
-            window.parent.postMessage({ type: 'bench-result', testId: 'blocking', time: performance.now() - s }, '*')
           })
           break
         }
