@@ -275,10 +275,9 @@ async function handleBulkLike() {
   miniReactBulkLike(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React (배치 적용) — iframe에서 실측
+  // Real React (배치 적용) — iframe에서 실측 (bench-like1000이 좋아요도 반영)
   let realTime = null
   if (realReactReady) {
-    sendToRealReact({ type: 'bulk-like', postId, times: 1000 })
     realTime = await new Promise(resolve => {
       const handler = (e) => {
         if (e.data && e.data.type === 'bench-result' && e.data.testId === 'like1000') {
@@ -287,7 +286,6 @@ async function handleBulkLike() {
         }
       }
       window.addEventListener('message', handler)
-      // bench-like1000도 보내서 시간 측정
       sendToRealReact({ type: 'bench-like1000' })
       setTimeout(() => { window.removeEventListener('message', handler); resolve(null) }, 15000)
     })
