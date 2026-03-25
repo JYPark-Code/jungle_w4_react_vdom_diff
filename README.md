@@ -188,32 +188,22 @@ sequenceDiagram
 
 ### Vanilla vs VDom — 인피니트 스크롤 문제
 
+**🟢 Mini React: diff + patch**
+
 ```mermaid
 graph LR
-    subgraph VDOM["🟢 Mini React: diff + patch"]
-        M1["스크롤 바닥 도달"] --> M2["Observer 발동"]
-        M2 --> M3["smartRender() 호출"]
-        M3 --> M4["diff → CREATE 10개"]
-        M4 --> M5["patch: 10개만 추가<br/>sentinel 유지 ✅"]
-        M5 --> M6["Observer 정상<br/>스크롤 계속 ✅"]
-    end
+    M1["스크롤 바닥 도달"] --> M2["Observer 발동"] --> M3["smartRender()"] --> M4["diff → CREATE 10개"] --> M5["patch: 10개만 추가 sentinel 유지 ✅"] --> M6["Observer 정상 스크롤 계속 ✅"]
 
-    style VDOM fill:#0d2117,stroke:#28a745,color:#f5f5f5
     style M5 fill:#28a745,stroke:#28a745,color:#fff
     style M6 fill:#28a745,stroke:#28a745,color:#fff
 ```
 
+**🔴 Vanilla: innerHTML 전체 교체**
+
 ```mermaid
 graph LR
-    subgraph VANILLA["🔴 Vanilla: innerHTML 전체 교체"]
-        V1["스크롤 바닥 도달"] --> V2["Observer 발동"]
-        V2 --> V3["render() 호출"]
-        V3 --> V4["innerHTML = ''<br/>sentinel 삭제됨 ⚠️"]
-        V4 --> V5["새 DOM 생성"]
-        V5 --> V6["Observer 연결 끊김<br/>스크롤 멈춤 ❌"]
-    end
+    V1["스크롤 바닥 도달"] --> V2["Observer 발동"] --> V3["render()"] --> V4["innerHTML = '' sentinel 삭제됨 ⚠️"] --> V5["새 DOM 생성"] --> V6["Observer 연결 끊김 스크롤 멈춤 ❌"]
 
-    style VANILLA fill:#2d1117,stroke:#dc3545,color:#f5f5f5
     style V4 fill:#dc3545,stroke:#dc3545,color:#fff
     style V6 fill:#dc3545,stroke:#dc3545,color:#fff
 ```
