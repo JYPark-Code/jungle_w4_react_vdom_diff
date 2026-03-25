@@ -132,13 +132,15 @@ function initRealReact() {
     iframe.style.display = 'none'
     fallback.style.display = 'block'
   }
-  // 3초 후에도 안 되면 폴백
+  // src를 다시 설정해서 로드 시도 (캐시 문제 방지)
+  iframe.src = 'http://localhost:3001'
+  // 5초 후에도 안 되면 폴백
   setTimeout(() => {
     if (!realReactReady) {
       iframe.style.display = 'none'
       fallback.style.display = 'block'
     }
-  }, 3000)
+  }, 5000)
 
   // Real React에서 오는 메시지 수신
   window.addEventListener('message', (e) => {
