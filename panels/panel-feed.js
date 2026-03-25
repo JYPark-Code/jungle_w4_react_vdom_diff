@@ -286,6 +286,11 @@ function handleBulkComment() {
   }
   const miniTime = performance.now() - miniStart
 
+  // Real React에도 댓글 추가
+  for (let i = 0; i < 50; i++) {
+    const postId = miniPosts[i % miniPosts.length].id
+    sendToRealReact({ type: 'add-comment', postId, text: `댓글 ${i + 1}번 테스트` })
+  }
   const realTime = miniTime * 0.85
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
