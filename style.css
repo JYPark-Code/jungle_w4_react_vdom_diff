@@ -728,7 +728,7 @@ button:disabled {
 }
 .diff-editor {
   width: 100%;
-  min-height: 450px;
+  min-height: 742px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

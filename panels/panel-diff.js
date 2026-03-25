@@ -240,21 +240,28 @@ function handlePatch() {
 }
 
 function handleUndo() {
+  const prevIdx = history.currentIndex
   const vnode = history.undo()
   if (!vnode) return
+  // 이전 상태와 현재 이동한 상태 간 diff를 계산해서 로그 유지
+  const oldVNode = history.snapshots[prevIdx]
+  const patches = diff(oldVNode, vnode)
   previousVNode = vnode
   syncBothAreas(vnode)
   updateButtons()
-  showPatches([{ info: '⏪ 뒤로가기' }])
+  showPatches(patches.length > 0 ? patches : [{ info: '⏪ 뒤로가기 — 변경 없음' }])
 }
 
 function handleRedo() {
+  const prevIdx = history.currentIndex
   const vnode = history.redo()
   if (!vnode) return
+  const oldVNode = history.snapshots[prevIdx]
+  const patches = diff(oldVNode, vnode)
   previousVNode = vnode
   syncBothAreas(vnode)
   updateButtons()
-  showPatches([{ info: '⏩ 앞으로가기' }])
+  showPatches(patches.length > 0 ? patches : [{ info: '⏩ 앞으로가기 — 변경 없음' }])
 }
 
 function handleReset() {
