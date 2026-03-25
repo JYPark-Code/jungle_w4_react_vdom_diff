@@ -1,6 +1,27 @@
 /* 전체 레이아웃 — SPA */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ===== 다크 스크롤바 (전역) ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -224,7 +245,7 @@ button:disabled {
   padding: var(--spacing-sm);
 }
 
-/* 스토리 바 */
+/* 스토리 바 — 드래그 스크롤, 스크롤바 숨김 */
 .story-bar {
   display: flex;
   gap: var(--spacing-sm);
@@ -232,6 +253,16 @@ button:disabled {
   overflow-x: auto;
   border-bottom: 1px solid var(--border);
   margin-bottom: var(--spacing-sm);
+  cursor: grab;
+  user-select: none;
+  -ms-overflow-style: none;   /* IE */
+  scrollbar-width: none;      /* Firefox */
+}
+.story-bar::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari */
+}
+.story-bar:active {
+  cursor: grabbing;
 }
 .story-item {
   display: flex;
@@ -297,37 +328,54 @@ button:disabled {
   object-fit: cover;
   display: block;
 }
+/* 좋아요 — Instagram 스타일: 왼쪽 정렬, 아이콘 크게 */
 .post-actions {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md) 0;
+  display: flex;
+  align-items: center;
 }
 .btn-like {
   background: transparent;
   color: var(--text-primary);
-  padding: 4px 8px;
-  font-size: 0.85rem;
+  padding: 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .btn-like--active {
   color: var(--like-active);
 }
 .like-count {
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 2px var(--spacing-md) 4px;
 }
+
+/* 캡션 — Instagram 스타일 */
 .post-caption {
-  padding: 0 var(--spacing-md) var(--spacing-sm);
+  padding: 4px var(--spacing-md) var(--spacing-sm);
   font-size: 0.8rem;
 }
+
+/* 댓글 — 캡션과 구분선 + 간격 */
 .post-comments {
-  padding: 0 var(--spacing-md);
+  padding: 0 var(--spacing-md) var(--spacing-sm);
+  border-top: 1px solid var(--border);
+  margin: 0 var(--spacing-md);
+  padding-top: var(--spacing-sm);
 }
 .comment {
   font-size: 0.75rem;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   display: flex;
-  align-items: center;
-  gap: 4px;
+  align-items: baseline;
+  gap: 6px;
+  line-height: 1.4;
 }
 .comment strong {
   font-size: 0.75rem;
+  flex-shrink: 0;
 }
 .btn-delete-comment {
   background: transparent;

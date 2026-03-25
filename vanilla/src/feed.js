@@ -4,6 +4,7 @@
 
 import { INITIAL_POSTS, INITIAL_STORIES, createPost, getNextPostId } from '../../shared/data.js'
 import AppState from '../../shared/app-state.js'
+import { enableDragScroll } from '../../shared/drag-scroll.js'
 
 let posts = []
 let stories = []
@@ -42,6 +43,7 @@ function render() {
     storyBar.appendChild(item)
   })
   container.appendChild(storyBar)
+  enableDragScroll(storyBar)
 
   // 피드
   const feedList = document.createElement('div')
@@ -74,9 +76,10 @@ function createPostCard(post) {
     </div>
     <div class="post-actions">
       <button class="btn-like ${post.liked ? 'btn-like--active' : ''}" data-id="${post.id}">
-        ${post.liked ? '❤️' : '🤍'} <span class="like-count">${post.likes}</span>
+        ${post.liked ? '❤️' : '🤍'}
       </button>
     </div>
+    <div class="like-count">좋아요 ${post.likes.toLocaleString()}개</div>
     <div class="post-caption"></div>
     <div class="post-comments"></div>
     <div class="comment-form">

@@ -8,6 +8,7 @@ import { patch } from './patch.js'
 import { highlightPatches } from './highlight.js'
 import { INITIAL_POSTS, INITIAL_STORIES, createPost, getNextPostId } from '../../shared/data.js'
 import AppState from '../../shared/app-state.js'
+import { enableDragScroll } from '../../shared/drag-scroll.js'
 
 let posts = []
 let stories = []
@@ -87,10 +88,10 @@ function buildFeedVNode() {
               class: `btn-like${post.liked ? ' btn-like--active' : ''}`,
               'data-id': post.id,
             },
-              post.liked ? '❤️ ' : '🤍 ',
-              createElement('span', { class: 'like-count' }, String(post.likes)),
+              post.liked ? '❤️' : '🤍',
             ),
           ),
+          createElement('div', { class: 'like-count' }, `좋아요 ${post.likes.toLocaleString()}개`),
           createElement('div', { class: 'post-caption' }, post.caption),
           createElement('div', { class: 'post-comments' },
             ...post.comments.map(comment =>
@@ -128,6 +129,10 @@ function buildFeedVNode() {
 // --- 이벤트 바인딩 (렌더 후 매번) ---
 function bindEvents() {
   if (!container) return
+
+  // 스토리 바 드래그 스크롤
+  const storyBar = container.querySelector('.story-bar')
+  if (storyBar) enableDragScroll(storyBar)
 
   // 좋아요
   container.querySelectorAll('.btn-like').forEach(btn => {
