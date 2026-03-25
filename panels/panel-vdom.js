@@ -151,10 +151,16 @@ function onStateChange(state) {
   newTreeEl.innerHTML = ''
   newTreeEl.appendChild(renderTree(state.currentVNode, [], patchMap, expandPaths, 'new'))
 
-  // 변경 사항이 있으면 diff 요약 블록으로 자동 스크롤
+  // 변경 사항이 있으면 현재 트리의 변경 노드로 자동 스크롤
   if (patches.length > 0) {
     setTimeout(() => {
-      diffBlock.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      // 현재 트리에서 첫 번째 변경 노드 찾기
+      const changedNode = newTreeEl.querySelector('[data-changed="true"]')
+      if (changedNode) {
+        changedNode.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else {
+        diffBlock.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
     }, 100)
   }
 }
@@ -236,6 +242,7 @@ function renderTree(vnode, path, patchMap, expandPaths, side) {
   label.className = 'tree-label'
 
   if (isChanged) {
+    wrapper.dataset.changed = 'true'  // 스크롤 대상 표시
     if (side === 'old') {
       label.classList.add('tree-label--removed')
       label.innerHTML = buildChangedLabel(vnode, patch, 'old')
