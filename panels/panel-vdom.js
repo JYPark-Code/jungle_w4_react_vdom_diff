@@ -25,8 +25,8 @@ export function initPanelVdom() {
     </div>
 
     <!-- 트리 뷰 (접기 가능) -->
-    <button class="tree-toggle" id="tree-toggle">▶ 전체 VNode 트리 보기</button>
-    <div id="tree-section" style="display:none">
+    <button class="tree-toggle" id="tree-toggle">▼ 전체 VNode 트리 접기</button>
+    <div id="tree-section">
       <div class="two-col vdom-trees">
         <div>
           <h3 class="tree-title">📋 이전 VNode 트리 <span class="tree-tag tree-tag--old">- 이전</span></h3>
@@ -48,13 +48,9 @@ export function initPanelVdom() {
   document.getElementById('tree-toggle').addEventListener('click', () => {
     const section = document.getElementById('tree-section')
     const btn = document.getElementById('tree-toggle')
-    if (section.style.display === 'none') {
-      section.style.display = 'block'
-      btn.textContent = '▼ 전체 VNode 트리 접기'
-    } else {
-      section.style.display = 'none'
-      btn.textContent = '▶ 전체 VNode 트리 보기'
-    }
+    const isHidden = section.style.display === 'none'
+    section.style.display = isHidden ? 'block' : 'none'
+    btn.textContent = isHidden ? '▼ 전체 VNode 트리 접기' : '▶ 전체 VNode 트리 보기'
   })
 
   onPanelMount('vdom', () => {
