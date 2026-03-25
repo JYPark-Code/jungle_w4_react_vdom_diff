@@ -525,33 +525,68 @@ button:disabled {
   border-left: 1px solid var(--border);
   margin: 2px 0;
 }
-.tree-label {
-  display: inline-block;
+/* 트리 타이틀 태그 */
+.tree-tag {
+  font-size: 0.65rem;
   padding: 1px 6px;
+  border-radius: 8px;
+  color: #fff;
+  margin-left: 6px;
+}
+.tree-tag--old { background: #dc3545; }
+.tree-tag--new { background: #28a745; }
+
+.tree-label {
+  display: block;
+  padding: 2px 8px;
   border-radius: 3px;
   color: #8be9fd;
+  line-height: 1.5;
 }
-.tree-label--text {
-  color: #f1fa8c;
+/* 변경 없는 노드 — 흐리게 */
+.tree-label--dim {
+  opacity: 0.3;
+  color: var(--text-secondary);
 }
-.tree-label--changed {
-  background: var(--hl-update);
-  color: #fff;
+/* 삭제/이전값 — 빨간 배경 */
+.tree-label--removed {
+  background: rgba(220, 53, 69, 0.2);
+  border-left: 3px solid #dc3545;
+  color: #f5f5f5;
+}
+/* 추가/새값 — 초록 배경 */
+.tree-label--added {
+  background: rgba(40, 167, 69, 0.2);
+  border-left: 3px solid #28a745;
+  color: #f5f5f5;
+}
+/* +/- 접두사 */
+.diff-prefix {
   font-weight: bold;
+  margin-right: 4px;
 }
-.tree-label--old-changed {
-  background: var(--hl-delete);
-  color: #fff;
-  text-decoration: line-through;
-  opacity: 0.7;
+.diff-prefix--old { color: #ff6b6b; }
+.diff-prefix--new { color: #51cf66; }
+/* 노드 이름 */
+.diff-node { color: #fff; }
+/* 변경 값 */
+.diff-value {
+  color: #ffd43b;
+  font-style: italic;
+  margin-left: 4px;
 }
+
 .tree-children {
   margin-left: 4px;
 }
-.tree-more {
+/* 접힌 노드 */
+.tree-collapsed {
   color: var(--text-secondary);
   font-style: italic;
-  padding-left: 16px;
+  font-size: 0.7rem;
+  opacity: 0.5;
+  display: block;
+  padding: 1px 0 1px 16px;
 }
 
 .vdom-patches {
