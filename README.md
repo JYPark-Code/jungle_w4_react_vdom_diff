@@ -190,20 +190,20 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    subgraph VANILLA["🔴 Vanilla: innerHTML 전체 교체"]
-        V1["스크롤 바닥 도달"] --> V2["Observer 발동"]
-        V2 --> V3["render() 호출"]
-        V3 --> V4["innerHTML = ''<br/>sentinel 삭제됨 ⚠️"]
-        V4 --> V5["새 DOM 생성"]
-        V5 --> V6["Observer 연결 끊김<br/>스크롤 멈춤 ❌"]
-    end
-
     subgraph VDOM["🟢 Mini React: diff + patch"]
         M1["스크롤 바닥 도달"] --> M2["Observer 발동"]
         M2 --> M3["smartRender() 호출"]
         M3 --> M4["diff → CREATE 10개"]
         M4 --> M5["patch: 10개만 추가<br/>sentinel 유지 ✅"]
         M5 --> M6["Observer 정상<br/>스크롤 계속 ✅"]
+    end
+
+    subgraph VANILLA["🔴 Vanilla: innerHTML 전체 교체"]
+        V1["스크롤 바닥 도달"] --> V2["Observer 발동"]
+        V2 --> V3["render() 호출"]
+        V3 --> V4["innerHTML = ''<br/>sentinel 삭제됨 ⚠️"]
+        V4 --> V5["새 DOM 생성"]
+        V5 --> V6["Observer 연결 끊김<br/>스크롤 멈춤 ❌"]
     end
 
     style VANILLA fill:#2d1117,stroke:#dc3545,color:#f5f5f5
