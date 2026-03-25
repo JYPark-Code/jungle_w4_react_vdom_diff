@@ -8,6 +8,28 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app"></div>
+  <!-- 네비게이션 바 -->
+  <nav id="nav" class="nav"></nav>
+
+  <!-- 5개 패널 -->
+  <main id="app">
+    <div id="panel-feed" class="panel">
+      <div class="panel-loading">피드·비교 패널 로딩 중...</div>
+    </div>
+    <div id="panel-vdom" class="panel">
+      <div class="panel-loading">VDom Inspector 패널 로딩 중...</div>
+    </div>
+    <div id="panel-diff" class="panel">
+      <div class="panel-loading">Diff & Patch 패널 로딩 중...</div>
+    </div>
+    <div id="panel-history" class="panel">
+      <div class="panel-loading">History 패널 로딩 중...</div>
+    </div>
+    <div id="panel-benchmark" class="panel">
+      <div class="panel-loading">Benchmark 패널 로딩 중...</div>
+    </div>
+  </main>
+
+  <script type="module" src="main.js"></script>
 </body>
 </html>

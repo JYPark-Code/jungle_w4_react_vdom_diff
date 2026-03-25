@@ -1,1 +1,146 @@
-/* 전체 레이아웃 — 마일스톤 진행에 따라 확장 */
+/* 전체 레이아웃 — SPA */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ===== 네비게이션 ===== */
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.nav-link:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+.nav-link--active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ===== 패널 시스템 ===== */
+#app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+.panel {
+  display: none;
+}
+.panel--active {
+  display: block;
+}
+
+.panel-header {
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+}
+.panel-header h2 {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+.panel-desc {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.panel-body {
+  min-height: 200px;
+}
+
+.placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: var(--spacing-lg);
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+}
+
+.panel-loading {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+/* ===== 공통 컴포넌트 ===== */
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: opacity 0.2s;
+}
+button:hover { opacity: 0.85; }
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.log-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.log-box pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ===== 2열 레이아웃 ===== */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+/* ===== 3열 레이아웃 (피드 비교) ===== */
+.three-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+/* ===== Diff 하이라이트 ===== */
+.hl-add    { background: var(--hl-add); }
+.hl-update { background: var(--hl-update); }
+.hl-delete { background: var(--hl-delete); }
