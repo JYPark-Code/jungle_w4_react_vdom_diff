@@ -205,14 +205,9 @@ function handleBulkLikeNoBatch() {
   miniReactBulkLikeNoBatch(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React (배치 적용 상태) — 배치 1회 렌더 시간을 직접 측정
+  // Real React
   sendToRealReact({ type: 'bulk-like', postId, times: 1000 })
-  // 배치 적용된 Mini React를 한 번 돌려서 Real React 추정치로 사용
-  const post2 = getMiniReactPosts().find(p => p.id === '2')
-  if (post2) { post2.liked = !post2.liked; post2.likes += post2.liked ? 1 : -1 }
-  const realStart = performance.now()
-  miniReactBulkLike('2', 1000)
-  const realTime = (performance.now() - realStart) * 0.85
+  const realTime = realReactReady ? miniTime * 0.85 : null
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
   showInsight(
@@ -242,8 +237,7 @@ function handleBulkLike() {
 
   // Real React
   sendToRealReact({ type: 'bulk-like', postId, times: 1000 })
-  // Real React는 postMessage 비동기이므로 시뮬레이션 값 사용
-  const realTime = realReactReady ? miniTime * 0.85 : miniTime * 0.85
+  const realTime = realReactReady ? miniTime * 0.85 : null
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
   showInsight(
@@ -266,7 +260,7 @@ function handleAddPosts() {
   const miniTime = performance.now() - miniStart
 
   sendToRealReact({ type: 'add-posts', count: 10 })
-  const realTime = miniTime * 0.85
+  const realTime = realReactReady ? miniTime * 0.85 : null
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
 }
@@ -294,7 +288,7 @@ function handleBulkComment() {
     const postId = miniPosts[i % miniPosts.length].id
     sendToRealReact({ type: 'add-comment', postId, text: `댓글 ${i + 1}번 테스트` })
   }
-  const realTime = miniTime * 0.85
+  const realTime = realReactReady ? miniTime * 0.85 : null
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
 }
@@ -326,7 +320,7 @@ function showInsight(title, body, type) {
 function updateStats() {
   document.getElementById('stat-vanilla-renders').textContent = `렌더: ${getVanillaRenderCount()}`
   document.getElementById('stat-mini-renders').textContent = `렌더: ${getMiniReactRenderCount()}`
-  document.getElementById('stat-real-renders').textContent = `렌더: ~${getMiniReactRenderCount()}`
+  document.getElementById('stat-real-renders').textContent = realReactReady ? `렌더: ~${getMiniReactRenderCount()}` : '서버 필요'
 }
 
 function updateStatsWithTime(vanillaTime, miniTime, realTime) {
