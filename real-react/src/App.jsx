@@ -127,6 +127,11 @@ export default function App() {
         case 'get-render-count':
           sendStats(renderCountRef.current, 0)
           break
+        case 'reset':
+          setPosts(INITIAL_POSTS.map(p => ({ ...p })))
+          setStories(INITIAL_STORIES.map(s => ({ ...s })))
+          nextId = 11
+          break
 
         // --- 벤치마크 ---
         // setState 콜백 안에서 연산 시간만 측정하고 즉시 응답

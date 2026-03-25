@@ -313,6 +313,7 @@ function handleReset() {
   initialized = false
   AppState.resetRenderCounts()
   resetVanillaInfiniteScroll()
+  sendToRealReact({ type: 'reset' })
   initFeeds()
   document.getElementById('stat-vanilla-time').textContent = '-'
   document.getElementById('stat-mini-time').textContent = '-'
