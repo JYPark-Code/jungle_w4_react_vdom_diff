@@ -728,7 +728,7 @@ button:disabled {
 }
 .diff-editor {
   width: 100%;
-  min-height: 742px;
+  height: 810px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -737,7 +737,7 @@ button:disabled {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   line-height: 1.5;
-  resize: vertical;
+  resize: both;
   outline: none;
 }
 .diff-editor:focus {
