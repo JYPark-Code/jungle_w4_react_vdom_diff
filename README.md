@@ -185,8 +185,46 @@ setState(3)  // 큐에 쌓기만
 |-----------|---------|------------|------------|
 | 좋아요 1000회 | ~488ms | ~0.2ms (배치) | ~0.2ms |
 | 포스트 100개 렌더 | 비슷 | 비슷 | 비슷 |
-| 인피니트 스크롤 +10개 | 전체 리렌더 | CREATE 10개만 | CREATE 10개만 |
+| 인피니트 스크롤 +10개 | **멈춤** (아래 설명) | CREATE 10개만 | CREATE 10개만 |
 | setState 3회 렌더 횟수 | 3회 | 1회 (배치) | 1회 (automatic batching) |
+
+### Vanilla 인피니트 스크롤이 멈추는 이유 — Sentinel 문제
+
+인피니트 스크롤은 **Intersection Observer**로 구현합니다. 피드 맨 아래에 보이지 않는 sentinel(감시 요소)을 두고, 이 요소가 화면에 들어오면 "바닥에 도달했다"고 판단해서 포스트를 추가합니다.
+
+```
+┌──────────────┐
+│  포스트 1     │
+│  포스트 2     │
+│  ...         │
+│  포스트 10    │
+│  ── sentinel ── ← Observer가 감시하는 요소
+└──────────────┘
+         ↓ 스크롤해서 sentinel이 보이면
+         ↓ Observer 발동 → 포스트 +10개 로드
+```
+
+**Vanilla의 문제:**
+```
+render() 호출
+  → container.innerHTML = ''   ← 전체 DOM 삭제 (sentinel 포함!)
+  → 새 DOM 생성               ← 새 sentinel도 생성되지만
+  → Observer는 이전 sentinel을 감시 중  ← 연결 끊김!
+```
+
+Vanilla는 매번 `innerHTML`로 전체를 지우고 다시 그리기 때문에, Observer가 감시하던 sentinel DOM 요소가 삭제됩니다. 새로 만들어진 sentinel은 Observer에 등록되지 않았으므로 **인피니트 스크롤이 멈춥니다.**
+
+**Mini React / Real React:**
+```
+smartRender() 호출
+  → diff(이전 VNode, 새 VNode)  ← 변경점만 찾음
+  → patch(변경된 부분만)         ← sentinel은 변경 없음 → DOM 그대로!
+  → Observer는 같은 sentinel을 계속 감시  ← 정상 동작
+```
+
+VDom 방식은 변경되지 않은 노드를 건드리지 않으므로, sentinel DOM이 유지되고 Observer 연결이 끊어지지 않습니다.
+
+**이것이 Virtual DOM이 필요한 실제 이유 중 하나입니다** — 단순한 속도 차이가 아니라, 전체 리렌더가 기존 DOM 참조(Observer, 이벤트, input 포커스 등)를 파괴하는 문제를 해결합니다.
 
 > Real React 측정값에 `~`가 붙는 이유: iframe(postMessage) 비동기 통신 특성상 동기 측정이 불가하여, 배치 적용된 Mini React 실측값 기반으로 추정합니다.
 
