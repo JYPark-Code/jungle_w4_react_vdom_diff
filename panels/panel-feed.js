@@ -95,6 +95,9 @@ export function initPanelFeed() {
   document.getElementById('ctrl-comment50').addEventListener('click', handleBulkComment)
   document.getElementById('ctrl-reset').addEventListener('click', handleReset)
 
+  // iframe 로드 감지는 페이지 로드 시 바로 실행 (벤치마크 탭에서도 필요)
+  initRealReact()
+
   onPanelMount('feed', () => {
     if (!initialized) {
       initFeeds()
@@ -110,7 +113,6 @@ let realReactLastTime = 0
 function initFeeds() {
   initVanillaFeed(document.getElementById('feed-vanilla'))
   initMiniReactFeed(document.getElementById('feed-mini'))
-  initRealReact()
   // 인피니트 스크롤 활성화
   initVanillaInfiniteScroll()
   initMiniInfiniteScroll()
@@ -121,33 +123,38 @@ function initRealReact() {
   const iframe = document.getElementById('real-react-iframe')
   const fallback = document.getElementById('real-react-fallback')
 
-  // iframe 로드 성공/실패 감지
-  iframe.onload = () => {
-    realReactReady = true
-    window.__realReactReady = true  // 벤치마크 패널에서도 확인 가능
-    iframe.style.display = 'block'
-    fallback.style.display = 'none'
-  }
+  // iframe onload는 서버 에러 페이지에도 발생하므로 신뢰하지 않음
+  // 대신 Real React 앱이 보내는 'real-react-ready' 메시지로 판단
   iframe.onerror = () => {
     realReactReady = false
     window.__realReactReady = false
     iframe.style.display = 'none'
     fallback.style.display = 'block'
   }
-  // src를 다시 설정해서 로드 시도 (캐시 문제 방지)
+  // src 설정
   iframe.src = 'http://localhost:3001'
-  // 5초 후에도 안 되면 폴백
+  // 8초 후에도 ready 메시지가 안 오면 폴백
   setTimeout(() => {
     if (!realReactReady) {
       window.__realReactReady = false
       iframe.style.display = 'none'
       fallback.style.display = 'block'
     }
-  }, 5000)
+  }, 8000)
 
   // Real React에서 오는 메시지 수신
   window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'real-react-stats') {
+    if (!e.data) return
+
+    // React 앱 로드 완료 — 진짜 준비됨
+    if (e.data.type === 'real-react-ready') {
+      realReactReady = true
+      window.__realReactReady = true
+      iframe.style.display = 'block'
+      fallback.style.display = 'none'
+    }
+
+    if (e.data.type === 'real-react-stats') {
       realReactRenderCount = e.data.renderCount
       realReactLastTime = e.data.time
     }

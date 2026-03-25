@@ -36,6 +36,11 @@ function sendStats(renderCount, time) {
   }
 }
 
+// 앱 로드 완료 알림 — 부모가 이걸 받아야 "Real React 준비됨"으로 판단
+if (window.parent !== window) {
+  window.parent.postMessage({ type: 'real-react-ready' }, '*')
+}
+
 export default function App() {
   const [posts, setPosts] = useState(INITIAL_POSTS)
   const [stories, setStories] = useState(INITIAL_STORIES)

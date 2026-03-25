@@ -133,7 +133,7 @@ function sendBench(testId) {
 // 벤치마크 결과 대기 Promise
 let benchResolvers = {}
 
-function waitForBenchResult(testId, timeout = 5000) {
+function waitForBenchResult(testId, timeout = 10000) {
   return new Promise((resolve) => {
     benchResolvers[testId] = resolve
     setTimeout(() => {
