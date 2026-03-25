@@ -241,21 +241,20 @@ function handleBulkLikeNoBatch() {
       comments: [{ id: `c1`, user: 'a', text: 'hi' }, { id: `c2`, user: 'b', text: 'hey' }],
       caption: 'test',
     }))
-    // 화면에 붙어있는 DOM으로 측정 (Reflow 비용 포함 — Vanilla/Mini React와 동일 조건)
-    const tempContainer = document.createElement('div')
-    tempContainer.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:400px'
-    document.body.appendChild(tempContainer)
+    // 실제 feed-real 컨테이너에서 DOM 조작 (Vanilla/Mini React와 동일 조건)
+    const realContainer = document.getElementById('feed-real')
+    const savedHTML = realContainer.innerHTML
     const realStart = performance.now()
     for (let i = 0; i < 1000; i++) {
       posts = posts.map(p =>
         p.id === '1' ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p
       )
-      tempContainer.innerHTML = posts.map(p =>
-        `<div class="post"><span>${p.user.avatar}</span><span>${p.user.name}</span><span>${p.liked ? '❤️' : '🤍'} ${p.likes}</span><p>${p.caption}</p></div>`
+      realContainer.innerHTML = posts.map(p =>
+        `<div class="post-card"><div class="post-header"><span class="post-avatar">${p.user.avatar}</span><span class="post-username">${p.user.name}</span></div><div class="post-actions"><button class="btn-like">${p.liked ? '❤️' : '🤍'}</button></div><div class="like-count">좋아요 ${p.likes}개</div><p class="post-caption">${p.caption}</p><div class="post-comments">${p.comments.map(c => `<div class="comment"><strong>${c.user}</strong> ${c.text}</div>`).join('')}</div></div>`
       ).join('')
     }
     realTime = performance.now() - realStart
-    document.body.removeChild(tempContainer)
+    realContainer.innerHTML = savedHTML
   }
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
