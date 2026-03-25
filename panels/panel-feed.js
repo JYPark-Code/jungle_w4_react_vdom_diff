@@ -231,26 +231,27 @@ function handleBulkLikeNoBatch() {
   miniReactBulkLikeNoBatch(postId, 1000)
   const miniTime = performance.now() - miniStart
 
-  // Real React (배치 없음) — 실제 피드 구조로 불변 업데이트 + 렌더 시뮬레이션 1000회
+  // Real React (배치 없음) — 불변 업데이트 + DOM 재렌더 시뮬레이션 1000회
   sendToRealReact({ type: 'bulk-like', postId: '1', times: 1000 })
   let realTime = null
   if (realReactReady) {
-    // 실제 피드와 동일한 구조의 데이터
     let posts = Array.from({ length: 10 }, (_, i) => ({
-      id: String(i + 1),
-      user: { name: `user_${i}`, avatar: '🧑' },
-      image: `img_${i}`, likes: 100, liked: false,
+      id: String(i + 1), user: { name: `user_${i}`, avatar: '🧑' },
+      likes: 100, liked: false,
       comments: [{ id: `c1`, user: 'a', text: 'hi' }, { id: `c2`, user: 'b', text: 'hey' }],
       caption: 'test',
     }))
+    const tempContainer = document.createElement('div')
     const realStart = performance.now()
     for (let i = 0; i < 1000; i++) {
-      // 불변 업데이트 (React 방식) — 매번 새 배열 + 새 객체 생성
+      // 1. 불변 업데이트 (React 방식)
       posts = posts.map(p =>
         p.id === '1' ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p
       )
-      // DOM 렌더 시뮬레이션 — 매번 JSON 직렬화로 비용 추가
-      JSON.stringify(posts)
+      // 2. DOM 재렌더 (React가 배치 없이 매번 렌더하는 것과 동일)
+      tempContainer.innerHTML = posts.map(p =>
+        `<div class="post"><span>${p.user.avatar}</span><span>${p.user.name}</span><span>${p.liked ? '❤️' : '🤍'} ${p.likes}</span><p>${p.caption}</p></div>`
+      ).join('')
     }
     realTime = performance.now() - realStart
   }
