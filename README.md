@@ -55,6 +55,177 @@ index.html (단일 파일)
 
 ---
 
+## 아키텍처
+
+### 전체 시스템 구조
+
+```mermaid
+graph TB
+    subgraph SPA["index.html (SPA)"]
+        NAV["네비게이션 바"]
+        ROUTER["router.js<br/>해시 기반 전환"]
+        NAV --> ROUTER
+
+        subgraph PANELS["5개 패널"]
+            P1["패널 1<br/>피드 비교"]
+            P2["패널 2<br/>VDom Inspector"]
+            P3["패널 3<br/>Diff & Patch"]
+            P4["패널 4<br/>History"]
+            P5["패널 5<br/>Benchmark"]
+        end
+        ROUTER --> PANELS
+    end
+
+    subgraph STATE["공유 상태"]
+        AS["AppState<br/>(옵저버 패턴)"]
+        DATA["data.js<br/>공통 더미 데이터"]
+    end
+
+    P1 -->|"상태 변경"| AS
+    AS -->|"자동 업데이트"| P2
+    AS -->|"자동 업데이트"| P3
+    AS -->|"자동 업데이트"| P4
+
+    style SPA fill:#121212,stroke:#262626,color:#f5f5f5
+    style STATE fill:#0a0a0a,stroke:#262626,color:#f5f5f5
+    style P1 fill:#1c1c1c,stroke:#0095f6,color:#f5f5f5
+    style P2 fill:#1c1c1c,stroke:#0095f6,color:#f5f5f5
+    style P3 fill:#1c1c1c,stroke:#0095f6,color:#f5f5f5
+    style P4 fill:#1c1c1c,stroke:#0095f6,color:#f5f5f5
+    style P5 fill:#1c1c1c,stroke:#0095f6,color:#f5f5f5
+```
+
+### 3버전 비교 구조 — 같은 데이터, 다른 렌더링
+
+```mermaid
+graph LR
+    subgraph INPUT["공통 입력"]
+        CTRL["공통 컨트롤<br/>좋아요·댓글·스크롤"]
+        DATA["동일한 더미 데이터<br/>(data.js)"]
+    end
+
+    subgraph A["A. Vanilla JS"]
+        A1["데이터 변경"]
+        A2["innerHTML = ''<br/>(전체 삭제)"]
+        A3["전체 DOM 재생성"]
+        A4["Reflow + Repaint<br/>(전체)"]
+        A1 --> A2 --> A3 --> A4
+    end
+
+    subgraph B["B. Mini React"]
+        B1["데이터 변경"]
+        B2["새 VNode 트리 생성"]
+        B3["diff(이전, 현재)"]
+        B4["patch(변경분만)"]
+        B1 --> B2 --> B3 --> B4
+    end
+
+    subgraph C["C. Real React"]
+        C1["setState()"]
+        C2["Reconciler<br/>(Fiber)"]
+        C3["commitWork()"]
+        C1 --> C2 --> C3
+    end
+
+    CTRL --> A1
+    CTRL --> B1
+    CTRL --> C1
+
+    style A fill:#2d1117,stroke:#dc3545,color:#f5f5f5
+    style B fill:#0d2117,stroke:#28a745,color:#f5f5f5
+    style C fill:#0d1b2a,stroke:#0095f6,color:#f5f5f5
+```
+
+### Mini React 엔진 파이프라인
+
+```mermaid
+graph LR
+    subgraph ENGINE["Mini React 엔진 (mini-react/src/)"]
+        CR["createElement()<br/>VNode 생성"] --> DIFF["diff()<br/>5케이스 비교"]
+        DIFF --> PATCH["patch()<br/>DOM 최소 수정"]
+        PATCH --> HL["highlight()<br/>변경 시각화"]
+
+        DIFF -.->|"key 있으면"| KD["key-diff<br/>MOVE 최적화"]
+        KD -.-> PATCH
+
+        FIBER["Fiber<br/>작업 분할"] -.->|"스케줄링"| DIFF
+        HOOKS["useState<br/>상태 관리"] -.->|"hooks[]"| FIBER
+        BATCH["Batch<br/>큐 기반"] -.->|"모아서 1회"| FIBER
+
+        HIST["StateHistory<br/>undo/redo"]
+        PATCH -->|"스냅샷 저장"| HIST
+    end
+
+    DOM["실제 DOM"]
+    PATCH -->|"최소 변경"| DOM
+
+    style ENGINE fill:#121212,stroke:#28a745,color:#f5f5f5
+    style DOM fill:#1c1c1c,stroke:#0095f6,color:#f5f5f5
+```
+
+### 데이터 흐름 — 패널 간 통신
+
+```mermaid
+sequenceDiagram
+    participant U as 사용자
+    participant P1 as 패널 1 (피드)
+    participant MR as Mini React 엔진
+    participant AS as AppState
+    participant P2 as 패널 2 (VDom)
+    participant P4 as 패널 4 (History)
+
+    U->>P1: 좋아요 클릭
+    P1->>MR: handleLike()
+    MR->>MR: 새 VNode 트리 생성
+    MR->>MR: diff(이전, 현재) → patches
+    MR->>MR: patch(DOM, patches)
+    MR->>AS: update({ currentVNode, lastPatches })
+    AS-->>P2: 자동 알림 (subscribe)
+    AS-->>P4: 자동 알림 (subscribe)
+    P2->>P2: 트리 시각화 + diff 표시
+    P4->>P4: 히스토리 타임라인 업데이트
+```
+
+### Vanilla vs VDom — 인피니트 스크롤 문제
+
+```mermaid
+graph TD
+    subgraph VANILLA["Vanilla: innerHTML 전체 교체"]
+        V1["스크롤 바닥 도달"]
+        V2["Observer 발동"]
+        V3["vanillaAddPosts(10)"]
+        V4["render() 호출"]
+        V5["innerHTML = ''<br/>⚠️ sentinel 삭제됨"]
+        V6["새 DOM 생성<br/>(새 sentinel 포함)"]
+        V7["❌ Observer는<br/>이전 sentinel 감시 중"]
+        V8["🔴 인피니트 스크롤 멈춤"]
+
+        V1 --> V2 --> V3 --> V4 --> V5 --> V6 --> V7 --> V8
+    end
+
+    subgraph VDOM["Mini React: diff + patch"]
+        M1["스크롤 바닥 도달"]
+        M2["Observer 발동"]
+        M3["miniReactAddPosts(10)"]
+        M4["smartRender() 호출"]
+        M5["diff → CREATE 10개"]
+        M6["patch → 10개만 추가<br/>✅ sentinel 그대로"]
+        M7["Observer 계속 감시"]
+        M8["🟢 인피니트 스크롤 정상"]
+
+        M1 --> M2 --> M3 --> M4 --> M5 --> M6 --> M7 --> M8
+    end
+
+    style VANILLA fill:#2d1117,stroke:#dc3545,color:#f5f5f5
+    style VDOM fill:#0d2117,stroke:#28a745,color:#f5f5f5
+    style V5 fill:#dc3545,stroke:#dc3545,color:#fff
+    style V8 fill:#dc3545,stroke:#dc3545,color:#fff
+    style M6 fill:#28a745,stroke:#28a745,color:#fff
+    style M8 fill:#28a745,stroke:#28a745,color:#fff
+```
+
+---
+
 ## Virtual DOM이 필요한 이유
 
 ```
