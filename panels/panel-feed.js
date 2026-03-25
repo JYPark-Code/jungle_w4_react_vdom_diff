@@ -241,19 +241,21 @@ function handleBulkLikeNoBatch() {
       comments: [{ id: `c1`, user: 'a', text: 'hi' }, { id: `c2`, user: 'b', text: 'hey' }],
       caption: 'test',
     }))
+    // 화면에 붙어있는 DOM으로 측정 (Reflow 비용 포함 — Vanilla/Mini React와 동일 조건)
     const tempContainer = document.createElement('div')
+    tempContainer.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:400px'
+    document.body.appendChild(tempContainer)
     const realStart = performance.now()
     for (let i = 0; i < 1000; i++) {
-      // 1. 불변 업데이트 (React 방식)
       posts = posts.map(p =>
         p.id === '1' ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p
       )
-      // 2. DOM 재렌더 (React가 배치 없이 매번 렌더하는 것과 동일)
       tempContainer.innerHTML = posts.map(p =>
         `<div class="post"><span>${p.user.avatar}</span><span>${p.user.name}</span><span>${p.liked ? '❤️' : '🤍'} ${p.likes}</span><p>${p.caption}</p></div>`
       ).join('')
     }
     realTime = performance.now() - realStart
+    document.body.removeChild(tempContainer)
   }
 
   updateStatsWithTime(vanillaTime, miniTime, realTime)
