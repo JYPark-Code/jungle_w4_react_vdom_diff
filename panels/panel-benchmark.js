@@ -245,36 +245,69 @@ function runBatch() {
 
 function showResult(testId, vanillaTime, miniTime, realTime, insight) {
   const maxTime = Math.max(vanillaTime, miniTime, realTime, 0.1)
+  const times = [vanillaTime, miniTime, realTime]
+  const min = Math.min(...times)
+  const max = Math.max(...times)
 
-  setBar('v', testId, vanillaTime, maxTime)
-  setBar('m', testId, miniTime, maxTime)
-  setBar('r', testId, realTime, maxTime)
+  // 바 초기화 후 애니메이션
+  ;['v', 'm', 'r'].forEach(p => {
+    const bar = document.getElementById(`bar-${p}-${testId}`)
+    if (bar) bar.style.width = '0%'
+  })
 
+  // 약간의 딜레이 후 애니메이션 시작 (CSS transition이 동작하도록)
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      setBar('v', testId, vanillaTime, maxTime, times)
+      setBar('m', testId, miniTime, maxTime, times)
+      setBar('r', testId, realTime, maxTime, times)
+    }, 50)
+  })
+
+  // 인사이트 — 비교 강조
   const insightEl = document.getElementById(`insight-${testId}`)
-  if (insightEl) insightEl.textContent = insight
+  if (insightEl) {
+    const ratio = max > 0 && min > 0 ? (max / min).toFixed(0) : '—'
+    const fastest = times.indexOf(min) === 0 ? 'Vanilla' : times.indexOf(min) === 1 ? 'Mini React' : 'Real React'
+    const slowest = times.indexOf(max) === 0 ? 'Vanilla' : times.indexOf(max) === 1 ? 'Mini React' : 'Real React'
+    insightEl.innerHTML = `${insight}<br/><strong>${slowest} 대비 ${fastest}가 ${ratio}배 빠릅니다</strong>`
+  }
 }
 
-function setBar(prefix, testId, time, maxTime) {
+function setBar(prefix, testId, time, maxTime, allTimes) {
   const bar = document.getElementById(`bar-${prefix}-${testId}`)
   const val = document.getElementById(`val-${prefix}-${testId}`)
   if (!bar || !val) return
 
   const pct = Math.max((time / maxTime) * 100, 2)
   bar.style.width = `${pct}%`
-  val.textContent = `${time.toFixed(1)}ms`
 
-  // 가장 느린 것은 빨간색 강조
-  const times = [
-    parseFloat(document.getElementById(`val-v-${testId}`)?.textContent) || 0,
-    parseFloat(document.getElementById(`val-m-${testId}`)?.textContent) || 0,
-    parseFloat(document.getElementById(`val-r-${testId}`)?.textContent) || 0,
-  ]
-  const min = Math.min(...times.filter(t => t > 0))
+  // 숫자 카운트업 애니메이션
+  animateValue(val, 0, time, 400)
+
+  // 색상 표시
+  const min = Math.min(...allTimes)
+  const max = Math.max(...allTimes)
+  val.className = 'bench-bar-value'
   if (time <= min * 1.1) {
     val.classList.add('stat-fast')
-    val.classList.remove('stat-slow')
-  } else if (time > min * 3) {
+    val.textContent += ' ✅'
+  } else if (time >= max * 0.9) {
     val.classList.add('stat-slow')
-    val.classList.remove('stat-fast')
+    val.textContent += ' 🔴'
   }
+}
+
+function animateValue(el, start, end, duration) {
+  const startTime = performance.now()
+  function update(now) {
+    const elapsed = now - startTime
+    const progress = Math.min(elapsed / duration, 1)
+    // ease-out
+    const eased = 1 - Math.pow(1 - progress, 3)
+    const current = start + (end - start) * eased
+    el.textContent = `${current.toFixed(1)}ms`
+    if (progress < 1) requestAnimationFrame(update)
+  }
+  requestAnimationFrame(update)
 }
