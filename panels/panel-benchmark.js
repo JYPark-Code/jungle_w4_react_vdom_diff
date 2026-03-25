@@ -97,9 +97,56 @@ export function initPanelBenchmark() {
 
   document.getElementById('bench-run-all').addEventListener('click', runAllBenchmarks)
 
+  // Real React 벤치마크 결과 수신
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'bench-result') {
+      onBenchResult(e.data.testId, e.data.time)
+    }
+  })
+
   onPanelMount('benchmark', () => {
     if (!initialized) initialized = true
   })
+}
+
+// --- Real React iframe 통신 ---
+
+function isRealReactAvailable() {
+  const iframe = document.getElementById('real-react-iframe')
+  return iframe && iframe.contentWindow
+}
+
+function sendBench(testId) {
+  if (!isRealReactAvailable()) return false
+  try {
+    const iframe = document.getElementById('real-react-iframe')
+    iframe.contentWindow.postMessage({ type: `bench-${testId}` }, '*')
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+// 벤치마크 결과 대기 Promise
+let benchResolvers = {}
+
+function waitForBenchResult(testId, timeout = 5000) {
+  return new Promise((resolve) => {
+    benchResolvers[testId] = resolve
+    setTimeout(() => {
+      if (benchResolvers[testId]) {
+        benchResolvers[testId] = null
+        resolve(null)  // 타임아웃
+      }
+    }, timeout)
+  })
+}
+
+function onBenchResult(testId, time) {
+  if (benchResolvers[testId]) {
+    benchResolvers[testId](time)
+    benchResolvers[testId] = null
+  }
 }
 
 // --- 벤치마크 실행 ---
@@ -119,36 +166,34 @@ async function runAllBenchmarks() {
   btn.textContent = '▶ 다시 실행'
 }
 
-function runLike1000() {
-  // Vanilla: 매번 전체 리렌더 시뮬레이션
-  let vanillaCount = 0
+async function runLike1000() {
   const vanillaStart = performance.now()
   for (let i = 0; i < 1000; i++) {
-    // innerHTML 전체 교체 시뮬레이션
     const div = document.createElement('div')
     div.innerHTML = `<div class="post"><span>${i}</span></div>`
-    vanillaCount++
   }
   const vanillaTime = performance.now() - vanillaStart
 
-  // Mini React: diff+patch로 변경분만
-  let miniCount = 0
   const miniStart = performance.now()
   let prevVNode = createElement('div', { class: 'post' }, createElement('span', {}, '0'))
   for (let i = 1; i <= 1000; i++) {
     const newVNode = createElement('div', { class: 'post' }, createElement('span', {}, String(i)))
-    const patches = diff(prevVNode, newVNode)
-    miniCount += patches.length > 0 ? 1 : 0
+    diff(prevVNode, newVNode)
     prevVNode = newVNode
   }
   const miniTime = performance.now() - miniStart
-  const realTime = miniTime * 0.85
+
+  // Real React 실측
+  let realTime = null
+  if (sendBench('like1000')) {
+    realTime = await waitForBenchResult('like1000')
+  }
 
   showResult('like1000', vanillaTime, miniTime, realTime,
-    `Vanilla: ${vanillaCount}회 전체 리렌더 / Mini React: diff만 실행 → ${(vanillaTime / miniTime).toFixed(0)}배 차이`)
+    `Vanilla: 1000회 전체 리렌더 / Mini React: diff만 실행`)
 }
 
-function runRender100() {
+async function runRender100() {
   const vanillaStart = performance.now()
   const container = document.createElement('div')
   for (let i = 0; i < 100; i++) {
@@ -165,45 +210,46 @@ function runRender100() {
       createElement('p', {}, post.caption),
     )
   })
-  const vnode = createElement('div', {}, ...children)
-  renderDOM(vnode)
+  renderDOM(createElement('div', {}, ...children))
   const miniTime = performance.now() - miniStart
-  const realTime = miniTime * 0.9
+
+  let realTime = null
+  if (sendBench('render100')) {
+    realTime = await waitForBenchResult('render100')
+  }
 
   showResult('render100', vanillaTime, miniTime, realTime,
     `초기 렌더링은 Vanilla가 비슷하거나 빠를 수 있음 — VDom의 이점은 업데이트에서`)
 }
 
-function runScroll10() {
-  // 기존 90개에 10개 추가
+async function runScroll10() {
   const vanillaStart = performance.now()
   const container = document.createElement('div')
   for (let i = 0; i < 90; i++) {
     container.innerHTML += `<div>Post ${i}</div>`
   }
-  // Vanilla: 전체 다시 그리기
   container.innerHTML = ''
   for (let i = 0; i < 100; i++) {
     container.innerHTML += `<div>Post ${i}</div>`
   }
   const vanillaTime = performance.now() - vanillaStart
 
-  // Mini React: 10개만 추가
   const miniStart = performance.now()
-  const oldChildren = Array.from({ length: 90 }, (_, i) => createElement('div', {}, `Post ${i}`))
-  const newChildren = Array.from({ length: 100 }, (_, i) => createElement('div', {}, `Post ${i}`))
-  const oldVNode = createElement('div', {}, ...oldChildren)
-  const newVNode = createElement('div', {}, ...newChildren)
+  const oldVNode = createElement('div', {}, ...Array.from({ length: 90 }, (_, i) => createElement('div', {}, `Post ${i}`)))
+  const newVNode = createElement('div', {}, ...Array.from({ length: 100 }, (_, i) => createElement('div', {}, `Post ${i}`)))
   const patches = diff(oldVNode, newVNode)
   const miniTime = performance.now() - miniStart
-  const realTime = miniTime * 0.85
+
+  let realTime = null
+  if (sendBench('scroll10')) {
+    realTime = await waitForBenchResult('scroll10')
+  }
 
   showResult('scroll10', vanillaTime, miniTime, realTime,
     `Vanilla: 100개 전체 리렌더 / Mini React: 10개 CREATE만 → ${patches.length}개 패치`)
 }
 
-function runBlocking() {
-  // Vanilla: 동기 렌더링 (블로킹)
+async function runBlocking() {
   const vanillaStart = performance.now()
   const container = document.createElement('div')
   for (let i = 0; i < 1000; i++) {
@@ -211,70 +257,80 @@ function runBlocking() {
   }
   const vanillaTime = performance.now() - vanillaStart
 
-  // Mini React: diff만 (Fiber 스케줄러 있음)
   const miniStart = performance.now()
   let prev = createElement('div', {}, 'a'.repeat(100))
   for (let i = 0; i < 1000; i++) {
-    const next = createElement('div', {}, 'b'.repeat(100))
-    diff(prev, next)
-    prev = next
+    diff(prev, createElement('div', {}, 'b'.repeat(100)))
   }
   const miniTime = performance.now() - miniStart
-  const realTime = miniTime * 0.8
+
+  let realTime = null
+  if (sendBench('blocking')) {
+    realTime = await waitForBenchResult('blocking')
+  }
 
   showResult('blocking', vanillaTime, miniTime, realTime,
-    `Vanilla: 렌더링 중 UI 멈춤 / Mini React: Fiber로 작업 분할 가능 (requestIdleCallback)`)
+    `Vanilla: 렌더링 중 UI 멈춤 / Mini React: Fiber로 작업 분할 가능`)
 }
 
-function runBatch() {
-  // Vanilla: setState마다 렌더 3회
-  const vanillaRenders = 3
-
-  // Mini React & Real React: 배치로 1회
-  const miniRenders = 1
-  const realRenders = 1
-
-  // 시간 시뮬레이션
+async function runBatch() {
   const vanillaTime = 3.0
   const miniTime = 1.0
-  const realTime = 1.0
+
+  let realTime = null
+  if (sendBench('batch')) {
+    realTime = await waitForBenchResult('batch')
+  }
 
   showResult('batch', vanillaTime, miniTime, realTime,
-    `Vanilla: ${vanillaRenders}회 렌더 / Mini React: ${miniRenders}회 (Batch) / Real React: ${realRenders}회 (automatic batching)`)
+    `Vanilla: 3회 렌더 / Mini React: 1회 (Batch) / Real React: 1회 (automatic batching)`)
 }
 
 function showResult(testId, vanillaTime, miniTime, realTime, insight) {
-  const maxTime = Math.max(vanillaTime, miniTime, realTime, 0.1)
-  const times = [vanillaTime, miniTime, realTime]
-  const min = Math.min(...times)
-  const max = Math.max(...times)
+  // realTime이 null이면 서버 미실행
+  const validTimes = [vanillaTime, miniTime, realTime].filter(t => t != null)
+  const maxTime = Math.max(...validTimes, 0.1)
+  const min = Math.min(...validTimes)
+  const max = Math.max(...validTimes)
 
-  // 바 초기화 후 애니메이션
+  // 바 초기화
   ;['v', 'm', 'r'].forEach(p => {
     const bar = document.getElementById(`bar-${p}-${testId}`)
     if (bar) bar.style.width = '0%'
   })
 
-  // 약간의 딜레이 후 애니메이션 시작 (CSS transition이 동작하도록)
   requestAnimationFrame(() => {
     setTimeout(() => {
-      setBar('v', testId, vanillaTime, maxTime, times)
-      setBar('m', testId, miniTime, maxTime, times)
-      setBar('r', testId, realTime, maxTime, times)
+      setBar('v', testId, vanillaTime, maxTime, validTimes)
+      setBar('m', testId, miniTime, maxTime, validTimes)
+      if (realTime != null) {
+        setBar('r', testId, realTime, maxTime, validTimes)
+      } else {
+        // 서버 필요 표시
+        const val = document.getElementById(`val-r-${testId}`)
+        if (val) {
+          val.textContent = '서버 필요'
+          val.className = 'bench-bar-value'
+          val.style.color = 'var(--text-secondary)'
+        }
+      }
     }, 50)
   })
 
-  // 인사이트 — 비교 강조
+  // 인사이트
   const insightEl = document.getElementById(`insight-${testId}`)
   if (insightEl) {
     const ratio = max > 0 && min > 0 ? (max / min).toFixed(0) : '—'
-    const fastest = times.indexOf(min) === 0 ? 'Vanilla' : times.indexOf(min) === 1 ? 'Mini React' : 'Real React'
-    const slowest = times.indexOf(max) === 0 ? 'Vanilla' : times.indexOf(max) === 1 ? 'Mini React' : 'Real React'
-    insightEl.innerHTML = `${insight}<br/><strong>${slowest} 대비 ${fastest}가 ${ratio}배 빠릅니다</strong>`
+    const names = ['Vanilla', 'Mini React', 'Real React']
+    const allTimes = [vanillaTime, miniTime, realTime]
+    const validOnly = allTimes.map((t, i) => t != null ? { t, name: names[i] } : null).filter(Boolean)
+    const fastest = validOnly.reduce((a, b) => a.t <= b.t ? a : b)
+    const slowest = validOnly.reduce((a, b) => a.t >= b.t ? a : b)
+    insightEl.innerHTML = `${insight}<br/><strong>${slowest.name} 대비 ${fastest.name}가 ${ratio}배 빠릅니다</strong>`
   }
 }
 
-function setBar(prefix, testId, time, maxTime, allTimes) {
+function setBar(prefix, testId, time, maxTime, validTimes) {
   const bar = document.getElementById(`bar-${prefix}-${testId}`)
   const val = document.getElementById(`val-${prefix}-${testId}`)
   if (!bar || !val) return
@@ -282,19 +338,15 @@ function setBar(prefix, testId, time, maxTime, allTimes) {
   const pct = Math.max((time / maxTime) * 100, 2)
   bar.style.width = `${pct}%`
 
-  // 숫자 카운트업 애니메이션
   animateValue(val, 0, time, 400)
 
-  // 색상 표시
-  const min = Math.min(...allTimes)
-  const max = Math.max(...allTimes)
+  const min = Math.min(...validTimes)
+  const max = Math.max(...validTimes)
   val.className = 'bench-bar-value'
   if (time <= min * 1.1) {
     val.classList.add('stat-fast')
-    val.textContent += ' ✅'
   } else if (time >= max * 0.9) {
     val.classList.add('stat-slow')
-    val.textContent += ' 🔴'
   }
 }
 

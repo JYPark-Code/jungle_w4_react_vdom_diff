@@ -125,6 +125,71 @@ export default function App() {
         case 'get-render-count':
           sendStats(renderCountRef.current, 0)
           break
+
+        // --- 벤치마크 ---
+        case 'bench-like1000': {
+          const s = performance.now()
+          setPosts(prev => {
+            let u = [...prev]
+            const idx = u.findIndex(p => p.id === '1')
+            if (idx === -1) return prev
+            for (let i = 0; i < 1000; i++) {
+              const p = { ...u[idx] }
+              p.liked = !p.liked
+              p.likes += p.liked ? 1 : -1
+              u[idx] = p
+            }
+            return u
+          })
+          requestAnimationFrame(() => {
+            window.parent.postMessage({ type: 'bench-result', testId: 'like1000', time: performance.now() - s }, '*')
+          })
+          break
+        }
+        case 'bench-render100': {
+          const s = performance.now()
+          const newPosts = Array.from({ length: 100 }, (_, i) => createPost(100 + i))
+          setPosts(prev => [...prev, ...newPosts])
+          requestAnimationFrame(() => {
+            window.parent.postMessage({ type: 'bench-result', testId: 'render100', time: performance.now() - s }, '*')
+          })
+          break
+        }
+        case 'bench-scroll10': {
+          const s = performance.now()
+          const morePosts = Array.from({ length: 10 }, (_, i) => createPost(200 + i))
+          setPosts(prev => [...prev, ...morePosts])
+          requestAnimationFrame(() => {
+            window.parent.postMessage({ type: 'bench-result', testId: 'scroll10', time: performance.now() - s }, '*')
+          })
+          break
+        }
+        case 'bench-batch': {
+          const s = performance.now()
+          // 3회 setState → React 18 automatic batching → 렌더 1회
+          setPosts(prev => prev.map((p, i) => i === 0 ? { ...p, likes: p.likes + 1 } : p))
+          setPosts(prev => prev.map((p, i) => i === 0 ? { ...p, likes: p.likes + 1 } : p))
+          setPosts(prev => prev.map((p, i) => i === 0 ? { ...p, likes: p.likes + 1 } : p))
+          requestAnimationFrame(() => {
+            window.parent.postMessage({ type: 'bench-result', testId: 'batch', time: performance.now() - s }, '*')
+          })
+          break
+        }
+        case 'bench-blocking': {
+          const s = performance.now()
+          // 1000개 연속 업데이트
+          setPosts(prev => {
+            let u = [...prev]
+            for (let i = 0; i < 1000; i++) {
+              u = u.map((p, idx) => idx === 0 ? { ...p, likes: p.likes + 1 } : p)
+            }
+            return u
+          })
+          requestAnimationFrame(() => {
+            window.parent.postMessage({ type: 'bench-result', testId: 'blocking', time: performance.now() - s }, '*')
+          })
+          break
+        }
       }
     }
     window.addEventListener('message', handler)
