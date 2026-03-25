@@ -525,3 +525,101 @@ button:disabled {
 .patch-item--replace { background: var(--hl-update); }
 .patch-item--text    { background: var(--hl-update); }
 .patch-item--props   { background: var(--hl-update); }
+
+/* ===== 패널 3: Diff & Patch 뷰어 ===== */
+.diff-areas {
+  margin-bottom: var(--spacing-md);
+}
+.diff-area-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.diff-tag {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #28a745;
+  color: #fff;
+}
+.diff-tag--edit {
+  background: var(--accent);
+}
+.diff-render-area {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  min-height: 280px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.diff-editor {
+  width: 100%;
+  min-height: 280px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+.diff-editor:focus {
+  border-color: var(--accent);
+}
+
+.diff-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.diff-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.85rem;
+}
+.diff-btn--primary {
+  background: #28a745;
+}
+.diff-btn--secondary {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.diff-result {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+.diff-result-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+.diff-patches-list {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.diff-patch-summary {
+  color: var(--accent);
+  font-weight: bold;
+  margin-bottom: var(--spacing-sm);
+}
+.diff-patch-item {
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+.diff-patch-item--ok      { color: #28a745; }
+.diff-patch-item--create  { background: var(--hl-add); }
+.diff-patch-item--remove  { background: var(--hl-delete); }
+.diff-patch-item--replace { background: var(--hl-update); }
+.diff-patch-item--text    { background: var(--hl-update); }
+.diff-patch-item--props   { background: var(--hl-update); }
