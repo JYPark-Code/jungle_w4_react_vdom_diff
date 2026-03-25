@@ -45,23 +45,25 @@ export function highlightPatches(rootDOM, patches) {
 
     if (!highlightTarget || !highlightTarget.style) continue
 
+    // 이전 타이머가 있으면 취소 (빠르게 연속 클릭 시 충돌 방지)
+    if (highlightTarget._highlightTimer) {
+      clearTimeout(highlightTarget._highlightTimer)
+    }
+
     // 하이라이트 적용
     const color = HIGHLIGHT_COLORS[p.type] || HIGHLIGHT_COLORS[PATCH_TYPES.PROPS]
-    const prevBg = highlightTarget.style.backgroundColor || ''
-    const prevTransition = highlightTarget.style.transition || ''
-    const prevOutline = highlightTarget.style.outline || ''
-
     highlightTarget.style.backgroundColor = color
     highlightTarget.style.outline = `2px solid ${color.replace('0.25', '0.6')}`
     highlightTarget.style.transition = 'background-color 0.5s, outline 0.5s'
 
     highlighted.push(highlightTarget)
 
-    // 1.5초 후 자동 제거
-    setTimeout(() => {
-      highlightTarget.style.backgroundColor = prevBg
-      highlightTarget.style.outline = prevOutline
-      highlightTarget.style.transition = prevTransition
+    // 1.5초 후 자동 제거 — 항상 빈 값으로 초기화
+    highlightTarget._highlightTimer = setTimeout(() => {
+      highlightTarget.style.backgroundColor = ''
+      highlightTarget.style.outline = ''
+      highlightTarget.style.transition = ''
+      highlightTarget._highlightTimer = null
     }, HIGHLIGHT_DURATION)
   }
 
