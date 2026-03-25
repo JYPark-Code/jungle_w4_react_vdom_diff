@@ -137,11 +137,15 @@ function bindEvents() {
   const storyBar = container.querySelector('.story-bar')
   if (storyBar) enableDragScroll(storyBar)
 
-  // 이벤트 위임은 한 번만 등록 — DOM이 바뀌어도 동작
+  // 이벤트 위임: #feed-mini 안에서 발생하는 클릭만 처리
+  // document 레벨에 등록해서 DOM 교체/추가와 무관하게 동작
   if (eventsBound) return
   eventsBound = true
 
-  container.addEventListener('click', (e) => {
+  document.addEventListener('click', (e) => {
+    // Mini React 피드 영역 안인지 확인
+    if (!e.target.closest('#feed-mini')) return
+
     // 좋아요
     const likeBtn = e.target.closest('.btn-like')
     if (likeBtn && likeBtn.dataset.id) {
@@ -175,7 +179,8 @@ function bindEvents() {
   })
 
   // 댓글 입력 엔터
-  container.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', (e) => {
+    if (!e.target.closest('#feed-mini')) return
     if (e.key === 'Enter' && e.target.classList.contains('comment-input')) {
       handleAddComment(e.target.dataset.postId, e.target.value)
       e.target.value = ''
