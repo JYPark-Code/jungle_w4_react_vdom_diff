@@ -14,7 +14,7 @@ const TESTS = [
   { id: 'like1000',   name: '좋아요 1000회 연속',         desc: '가장 흔한 인터랙션에서의 차이' },
   { id: 'render100',  name: '포스트 100개 최초 렌더링',     desc: '초기 로딩 속도' },
   { id: 'scroll10',   name: '인피니티 스크롤 +10개',       desc: '스크롤 중 추가 렌더링' },
-  { id: 'blocking',   name: '렌더링 중 UI 블로킹 여부',    desc: 'Fiber 핵심 지표' },
+  { id: 'blocking',   name: 'UI 블로킹 (응답 지연 시간)',   desc: 'setTimeout(fn,0) 응답까지 걸리는 시간' },
   { id: 'batch',      name: 'setState 3회 동시 호출',      desc: 'Batching — 렌더링 횟수 비교' },
 ]
 
@@ -260,27 +260,57 @@ async function runScroll10() {
 }
 
 async function runBlocking() {
-  const vanillaStart = performance.now()
-  const container = document.createElement('div')
-  for (let i = 0; i < 1000; i++) {
-    container.innerHTML = `<div>${'a'.repeat(100)}</div>`
-  }
-  const vanillaTime = performance.now() - vanillaStart
+  // UI 블로킹 측정: 렌더링 중 setTimeout(fn,0) 응답까지 걸리는 시간
+  // 블로킹이 심할수록 setTimeout 콜백이 늦게 실행됨
 
-  const miniStart = performance.now()
-  let prev = createElement('div', {}, 'a'.repeat(100))
-  for (let i = 0; i < 1000; i++) {
-    diff(prev, createElement('div', {}, 'b'.repeat(100)))
-  }
-  const miniTime = performance.now() - miniStart
+  const vanillaTime = await measureBlocking(() => {
+    // Vanilla: 동기 DOM 조작 1000회 — 메인 스레드 점유
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    for (let i = 0; i < 1000; i++) {
+      container.innerHTML = `<div>${'a'.repeat(100)}-${i}</div>`
+    }
+    document.body.removeChild(container)
+  })
 
-  let realTime = null
-  if (sendBench('blocking')) {
-    realTime = await waitForBenchResult('blocking')
-  }
+  const miniTime = await measureBlocking(() => {
+    // Mini React: diff 1000회 — JS 연산만
+    let prev = createElement('div', {}, 'a'.repeat(100))
+    for (let i = 0; i < 1000; i++) {
+      const next = createElement('div', {}, `${'b'.repeat(100)}-${i}`)
+      diff(prev, next)
+      prev = next
+    }
+  })
+
+  // Real React: iframe 없이 직접 측정 (React도 동기 렌더링이므로 비슷)
+  const realTime = await measureBlocking(() => {
+    // React 스타일: 불변 배열 map 1000회
+    let arr = Array.from({ length: 10 }, (_, i) => ({ id: i, v: 0 }))
+    for (let i = 0; i < 1000; i++) {
+      arr = arr.map((item, idx) => idx === 0 ? { ...item, v: item.v + 1 } : item)
+    }
+  })
 
   showResult('blocking', vanillaTime, miniTime, realTime,
-    `Vanilla: 렌더링 중 UI 멈춤 / Mini React: Fiber로 작업 분할 가능`)
+    `setTimeout(fn,0) 응답 시간 측정 — 블로킹이 심할수록 느림`)
+}
+
+/**
+ * 작업 실행 중 setTimeout(fn,0) 응답까지 걸리는 시간을 측정해요
+ * 메인 스레드가 블로킹되면 setTimeout 콜백이 늦게 실행됨
+ */
+function measureBlocking(work) {
+  return new Promise(resolve => {
+    const start = performance.now()
+    // setTimeout을 먼저 예약 — 작업이 끝나야 실행됨
+    setTimeout(() => {
+      const responseTime = performance.now() - start
+      resolve(responseTime)
+    }, 0)
+    // 블로킹 작업 실행
+    work()
+  })
 }
 
 async function runBatch() {
